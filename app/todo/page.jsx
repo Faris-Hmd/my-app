@@ -73,6 +73,7 @@ function TodoApp() {
   // ...existing code...
   const [editingTodoId, setEditingTodoId] = useState(null);
   const [editingTodoText, setEditingTodoText] = useState("");
+  const [loading, setLoading] = useState(false);
   // Inject Nunito Sans font from Google Fonts
   useEffect(() => {
     if (!document.getElementById('nunito-sans-font')) {
@@ -142,18 +143,20 @@ function TodoApp() {
 
   // Move todo in the list and persist order
   const moveTodo = async (from, to) => {
+    setLoading(true);
     setTodos(prev => {
       const updated = reorderArray(prev, from, to);
       // Update order in Firestore
-      updated.forEach((todo, idx) => {
-        updateDoc(doc(db, "todos", todo.id), { order: idx });
-      });
+      Promise.all(
+        updated.map((todo, idx) => updateDoc(doc(db, "todos", todo.id), { order: idx }))
+      ).finally(() => setLoading(false));
       return updated;
     });
   };
 
   const handleAdd = async () => {
     if (input.trim() !== "") {
+      setLoading(true);
       let cat = category;
       if (cat === "Other") cat = customCategory.trim();
       await addDoc(collection(db, "todos"), { text: input, category: cat });
@@ -169,10 +172,12 @@ function TodoApp() {
       setInput("");
       setCategory("");
       setCustomCategory("");
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
+    setLoading(true);
     await deleteDoc(doc(db, "todos", id));
     setCompleted(prev => {
       const copy = { ...prev };
@@ -180,6 +185,7 @@ function TodoApp() {
       localStorage.setItem("copilot-todo-completed", JSON.stringify(copy));
       return copy;
     });
+    setLoading(false);
   };
 
   const handleEditTodo = (todo) => {
@@ -189,9 +195,11 @@ function TodoApp() {
 
   const handleSaveEditTodo = async (todo) => {
     if (editingTodoText.trim() !== "") {
+      setLoading(true);
       await updateDoc(doc(db, "todos", todo.id), { text: editingTodoText });
       setEditingTodoId(null);
       setEditingTodoText("");
+      setLoading(false);
     }
   };
 
@@ -209,12 +217,14 @@ function TodoApp() {
   };
 
   const handleCategoryUpdate = async (todo) => {
+    setLoading(true);
     let cat = editingCategory;
     if (cat === "Other") cat = editingCustomCategory.trim();
     await updateDoc(doc(db, "todos", todo.id), { category: cat });
     setEditingCategoryId(null);
     setEditingCategory("");
     setEditingCustomCategory("");
+    setLoading(false);
   };
 
   const handleDeleteCategory = async (cat) => {
@@ -301,6 +311,23 @@ function TodoApp() {
       transition: "background 0.2s",
       fontFamily: "'Nunito Sans', Inter, sans-serif"
     }}>
+      {/* Loading overlay */}
+      {loading && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.18)',
+          zIndex: 99999,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            width: 60, height: 60, border: '6px solid #6366f1', borderTop: '6px solid #fff', borderRadius: '50%',
+            animation: 'spin 1s linear infinite', background: 'rgba(255,255,255,0.7)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }} />
+          <style>{`@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`}</style>
+        </div>
+      )}
       {/* Overlay for readability */}
       <div style={{
         position: "absolute",
