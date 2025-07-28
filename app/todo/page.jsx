@@ -2,6 +2,7 @@
 import  { useState, useEffect } from "react";
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { db } from "../db/firebase";
 import {
   collection,
@@ -56,6 +57,16 @@ function reorderArray(arr, from, to) {
   const [removed] = updated.splice(from, 1);
   updated.splice(to, 0, removed);
   return updated;
+}
+
+function isTouchDevice() {
+  if (typeof window === 'undefined') return false;
+  return (
+    'ontouchstart' in window ||
+    (window.DocumentTouch && document instanceof window.DocumentTouch) ||
+    navigator.maxTouchPoints > 0 ||
+    navigator.msMaxTouchPoints > 0
+  );
 }
 
 function TodoApp() {
@@ -281,6 +292,7 @@ function TodoApp() {
     }
   }, [categoryOptions, editingDropdownCategory]);
 
+  const dndBackend = isTouchDevice() ? TouchBackend : HTML5Backend;
   return (
     <div style={{
       minHeight: "100vh",
@@ -671,7 +683,7 @@ function TodoApp() {
             Add
           </button>
         </div>
-        <DndProvider backend={HTML5Backend}>
+        <DndProvider backend={dndBackend}>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {todos.map((todo, idx) => (
               <DraggableTodo key={todo.id} todo={todo} idx={idx} moveTodo={moveTodo}>
