@@ -18,6 +18,7 @@ import React, { useRef } from "react";
 import { createPortal } from "react-dom";
 
 function TodoApp() {
+  const [loading, setLoading] = useState(false);
   // Inject Nunito Sans font from Google Fonts
   useEffect(() => {
     if (!document.getElementById('nunito-sans-font')) {
@@ -83,32 +84,42 @@ function TodoApp() {
 
   const handleAdd = async () => {
     if (input.trim() !== "") {
-      let cat = category;
-      if (cat === "Other") cat = customCategory.trim();
-      await addDoc(collection(db, "todos"), { text: input, category: cat });
-      // Save new custom category to Firestore if not already present
-      if (cat && !["Work", "Personal", "Shopping", "Study"].includes(cat) && !categoryOptions.includes(cat)) {
-        await addCategory(cat);
-        setCategoryOptions(prev => [
-          ...prev.filter(c => c !== "Other"),
-          cat,
-          "Other"
-        ]);
+      setLoading(true);
+      try {
+        let cat = category;
+        if (cat === "Other") cat = customCategory.trim();
+        await addDoc(collection(db, "todos"), { text: input, category: cat });
+        // Save new custom category to Firestore if not already present
+        if (cat && !["Work", "Personal", "Shopping", "Study"].includes(cat) && !categoryOptions.includes(cat)) {
+          await addCategory(cat);
+          setCategoryOptions(prev => [
+            ...prev.filter(c => c !== "Other"),
+            cat,
+            "Other"
+          ]);
+        }
+        setInput("");
+        setCategory("");
+        setCustomCategory("");
+      } finally {
+        setLoading(false);
       }
-      setInput("");
-      setCategory("");
-      setCustomCategory("");
     }
   };
 
   const handleDelete = async (id) => {
-    await deleteDoc(doc(db, "todos", id));
-    setCompleted(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      localStorage.setItem("copilot-todo-completed", JSON.stringify(copy));
-      return copy;
-    });
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, "todos", id));
+      setCompleted(prev => {
+        const copy = { ...prev };
+        delete copy[id];
+        localStorage.setItem("copilot-todo-completed", JSON.stringify(copy));
+        return copy;
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleToggleCompleted = (id) => {
@@ -120,23 +131,33 @@ function TodoApp() {
   };
 
   const handleCategoryUpdate = async (todo) => {
-    let cat = editingCategory;
-    if (cat === "Other") cat = editingCustomCategory.trim();
-    await updateDoc(doc(db, "todos", todo.id), { category: cat });
-    setEditingCategoryId(null);
-    setEditingCategory("");
-    setEditingCustomCategory("");
+    setLoading(true);
+    try {
+      let cat = editingCategory;
+      if (cat === "Other") cat = editingCustomCategory.trim();
+      await updateDoc(doc(db, "todos", todo.id), { category: cat });
+      setEditingCategoryId(null);
+      setEditingCategory("");
+      setEditingCustomCategory("");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDeleteCategory = async (cat) => {
-    // Remove from Firestore
-    const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
-    const match = catsSnapshot.docs.find(d => d.data().name === cat);
-    if (match) await deleteCategoryDoc(categoryDoc(db, "categories", match.id));
-    // Remove from dropdown
-    setCategoryOptions(prev => prev.filter(c => c !== cat));
-    // If currently selected, clear
-    if (category === cat) setCategory("");
+    setLoading(true);
+    try {
+      // Remove from Firestore
+      const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
+      const match = catsSnapshot.docs.find(d => d.data().name === cat);
+      if (match) await deleteCategoryDoc(categoryDoc(db, "categories", match.id));
+      // Remove from dropdown
+      setCategoryOptions(prev => prev.filter(c => c !== cat));
+      // If currently selected, clear
+      if (category === cat) setCategory("");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditDropdownCategory = (cat) => {
@@ -146,16 +167,21 @@ function TodoApp() {
 
   const handleSaveDropdownCategory = async (oldCat) => {
     if (!editingDropdownValue.trim() || categoryOptions.includes(editingDropdownValue.trim())) return;
-    // Update in Firestore
-    const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
-    const match = catsSnapshot.docs.find(d => d.data().name === oldCat);
-    if (match) {
-      await updateDoc(categoryDoc(db, "categories", match.id), { name: editingDropdownValue.trim() });
+    setLoading(true);
+    try {
+      // Update in Firestore
+      const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
+      const match = catsSnapshot.docs.find(d => d.data().name === oldCat);
+      if (match) {
+        await updateDoc(categoryDoc(db, "categories", match.id), { name: editingDropdownValue.trim() });
+      }
+      setCategoryOptions(prev => prev.map(c => c === oldCat ? editingDropdownValue.trim() : c));
+      if (category === oldCat) setCategory(editingDropdownValue.trim());
+      setEditingDropdownCategory(null);
+      setEditingDropdownValue("");
+    } finally {
+      setLoading(false);
     }
-    setCategoryOptions(prev => prev.map(c => c === oldCat ? editingDropdownValue.trim() : c));
-    if (category === oldCat) setCategory(editingDropdownValue.trim());
-    setEditingDropdownCategory(null);
-    setEditingDropdownValue("");
   };
 
   const handleCancelDropdownEdit = () => {
@@ -211,6 +237,36 @@ function TodoApp() {
       transition: "background 0.2s",
       fontFamily: "'Nunito Sans', Inter, sans-serif"
     }}>
+      {loading && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: "100vh",
+          background: "rgba(0,0,0,0.18)",
+          zIndex: 99999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "all"
+        }}>
+          <div style={{
+            width: 60,
+            height: 60,
+            border: "6px solid #e0e7ff",
+            borderTop: `6px solid ${darkMode ? '#6366f1' : '#0070f3'}`,
+            borderRadius: "50%",
+            animation: "copilot-spin 1s linear infinite"
+          }} />
+          <style>{`
+            @keyframes copilot-spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
       {/* Overlay for readability */}
       <div style={{
         position: "absolute",
