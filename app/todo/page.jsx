@@ -457,7 +457,20 @@ function TodoApp() {
         zIndex: 0,
         pointerEvents: "none"
       }} />
-      {/* Shared Navbar */}
+      {/* To-Do App Title on its own line */}
+      <div style={{ width: '100%', textAlign: 'center', margin: '0 0 2px 0' }}>
+        <span className="copilot-todo-title" style={{
+          color: darkMode ? '#f3f4f6' : '#222',
+          fontWeight: 700,
+          fontSize: 28,
+          fontFamily: "'Nunito Sans', Inter, sans-serif",
+          letterSpacing: 0.2,
+          display: 'inline-block',
+          margin: '0 auto',
+          padding: '0 0 2px 0',
+          lineHeight: 1.2
+        }}>To-Do List</span>
+      </div>
       <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
       <div
         className="copilot-todo-main"
@@ -490,7 +503,7 @@ function TodoApp() {
             Please login to view your todos.
           </div>
         )}
-        <h2 className="copilot-todo-title" style={{ textAlign: "center", color: darkMode ? "#f3f4f6" : "#222", fontWeight: 700, fontSize: 28, marginBottom: 24, fontFamily: "'Nunito Sans', Inter, sans-serif" }}>To-Do List</h2>
+        {/* ...existing code... (title now above navbar) */}
         {user && (
         <div className="copilot-todo-inputs" style={{
           display: "flex",
@@ -887,18 +900,22 @@ function TodoApp() {
                         opacity: completed[todo.id] ? 0.6 : 1,
                         transition: 'all 0.18s',
                         fontFamily: "'Nunito Sans', Inter, sans-serif",
-                        display: 'flex', alignItems: 'center', gap: 8
+                        display: 'block',
+                        lineHeight: 1.3
                       }}
                     >
-                      {todo.text}
+                      <span style={{ display: 'block', marginBottom: todo.category ? 2 : 0 }}>{todo.text}</span>
                       {todo.category && (
                         <span style={{
+                          display: 'block',
                           background: darkMode ? "#3730a3" : "#e0e7ff",
                           color: darkMode ? "#e0e7ff" : "#3730a3",
                           borderRadius: "4px",
                           padding: "2px 8px",
-                          marginLeft: "10px",
-                          fontSize: "14px"
+                          margin: 0,
+                          fontSize: "14px",
+                          width: 'fit-content',
+                          marginTop: 2
                         }}>
                           {todo.category}
                         </span>
