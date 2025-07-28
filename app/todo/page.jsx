@@ -1,5 +1,7 @@
 "use client"
 import  { useState, useEffect } from "react";
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { db } from "../db/firebase";
 import {
   collection,
@@ -17,8 +19,49 @@ import { addCategory, getCategories } from "../db/categories";
 import React, { useRef } from "react";
 import { createPortal } from "react-dom";
 
+const ITEM_TYPE = 'TODO_ITEM';
+
+function DraggableTodo({ todo, idx, moveTodo, children }) {
+  const ref = useRef(null);
+  const [, drop] = useDrop({
+    accept: ITEM_TYPE,
+    hover(item) {
+      if (item.idx === idx) return;
+      moveTodo(item.idx, idx);
+      item.idx = idx;
+    },
+  });
+  const [{ isDragging }, drag] = useDrag({
+    type: ITEM_TYPE,
+    item: { id: todo.id, idx },
+    collect: (monitor) => ({ isDragging: monitor.isDragging() })
+  });
+  drag(drop(ref));
+  return (
+    <li
+      ref={ref}
+      style={{
+        opacity: isDragging ? 0.5 : 1,
+        cursor: 'grab',
+        ...children.props.style
+      }}
+    >
+      {children.props.children}
+    </li>
+  );
+}
+
+function reorderArray(arr, from, to) {
+  const updated = [...arr];
+  const [removed] = updated.splice(from, 1);
+  updated.splice(to, 0, removed);
+  return updated;
+}
+
 function TodoApp() {
-  const [loading, setLoading] = useState(false);
+  // ...existing code...
+  const [editingTodoId, setEditingTodoId] = useState(null);
+  const [editingTodoText, setEditingTodoText] = useState("");
   // Inject Nunito Sans font from Google Fonts
   useEffect(() => {
     if (!document.getElementById('nunito-sans-font')) {
@@ -58,11 +101,15 @@ function TodoApp() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "todos"), (snapshot) => {
-      setTodos(snapshot.docs.map(doc => ({
+      // Sort by 'order' field if present, fallback to created order
+      const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         text: doc.data().text,
-        category: doc.data().category || ""
-      })));
+        category: doc.data().category || "",
+        order: doc.data().order ?? 0
+      }));
+      docs.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      setTodos(docs);
     });
     // Load completed state from localStorage
     const stored = localStorage.getItem("copilot-todo-completed");
@@ -82,44 +129,64 @@ function TodoApp() {
     return () => unsub();
   }, []);
 
+  // Move todo in the list and persist order
+  const moveTodo = async (from, to) => {
+    setTodos(prev => {
+      const updated = reorderArray(prev, from, to);
+      // Update order in Firestore
+      updated.forEach((todo, idx) => {
+        updateDoc(doc(db, "todos", todo.id), { order: idx });
+      });
+      return updated;
+    });
+  };
+
   const handleAdd = async () => {
     if (input.trim() !== "") {
-      setLoading(true);
-      try {
-        let cat = category;
-        if (cat === "Other") cat = customCategory.trim();
-        await addDoc(collection(db, "todos"), { text: input, category: cat });
-        // Save new custom category to Firestore if not already present
-        if (cat && !["Work", "Personal", "Shopping", "Study"].includes(cat) && !categoryOptions.includes(cat)) {
-          await addCategory(cat);
-          setCategoryOptions(prev => [
-            ...prev.filter(c => c !== "Other"),
-            cat,
-            "Other"
-          ]);
-        }
-        setInput("");
-        setCategory("");
-        setCustomCategory("");
-      } finally {
-        setLoading(false);
+      let cat = category;
+      if (cat === "Other") cat = customCategory.trim();
+      await addDoc(collection(db, "todos"), { text: input, category: cat });
+      // Save new custom category to Firestore if not already present
+      if (cat && !["Work", "Personal", "Shopping", "Study"].includes(cat) && !categoryOptions.includes(cat)) {
+        await addCategory(cat);
+        setCategoryOptions(prev => [
+          ...prev.filter(c => c !== "Other"),
+          cat,
+          "Other"
+        ]);
       }
+      setInput("");
+      setCategory("");
+      setCustomCategory("");
     }
   };
 
   const handleDelete = async (id) => {
-    setLoading(true);
-    try {
-      await deleteDoc(doc(db, "todos", id));
-      setCompleted(prev => {
-        const copy = { ...prev };
-        delete copy[id];
-        localStorage.setItem("copilot-todo-completed", JSON.stringify(copy));
-        return copy;
-      });
-    } finally {
-      setLoading(false);
+    await deleteDoc(doc(db, "todos", id));
+    setCompleted(prev => {
+      const copy = { ...prev };
+      delete copy[id];
+      localStorage.setItem("copilot-todo-completed", JSON.stringify(copy));
+      return copy;
+    });
+  };
+
+  const handleEditTodo = (todo) => {
+    setEditingTodoId(todo.id);
+    setEditingTodoText(todo.text);
+  };
+
+  const handleSaveEditTodo = async (todo) => {
+    if (editingTodoText.trim() !== "") {
+      await updateDoc(doc(db, "todos", todo.id), { text: editingTodoText });
+      setEditingTodoId(null);
+      setEditingTodoText("");
     }
+  };
+
+  const handleCancelEditTodo = () => {
+    setEditingTodoId(null);
+    setEditingTodoText("");
   };
 
   const handleToggleCompleted = (id) => {
@@ -131,33 +198,23 @@ function TodoApp() {
   };
 
   const handleCategoryUpdate = async (todo) => {
-    setLoading(true);
-    try {
-      let cat = editingCategory;
-      if (cat === "Other") cat = editingCustomCategory.trim();
-      await updateDoc(doc(db, "todos", todo.id), { category: cat });
-      setEditingCategoryId(null);
-      setEditingCategory("");
-      setEditingCustomCategory("");
-    } finally {
-      setLoading(false);
-    }
+    let cat = editingCategory;
+    if (cat === "Other") cat = editingCustomCategory.trim();
+    await updateDoc(doc(db, "todos", todo.id), { category: cat });
+    setEditingCategoryId(null);
+    setEditingCategory("");
+    setEditingCustomCategory("");
   };
 
   const handleDeleteCategory = async (cat) => {
-    setLoading(true);
-    try {
-      // Remove from Firestore
-      const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
-      const match = catsSnapshot.docs.find(d => d.data().name === cat);
-      if (match) await deleteCategoryDoc(categoryDoc(db, "categories", match.id));
-      // Remove from dropdown
-      setCategoryOptions(prev => prev.filter(c => c !== cat));
-      // If currently selected, clear
-      if (category === cat) setCategory("");
-    } finally {
-      setLoading(false);
-    }
+    // Remove from Firestore
+    const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
+    const match = catsSnapshot.docs.find(d => d.data().name === cat);
+    if (match) await deleteCategoryDoc(categoryDoc(db, "categories", match.id));
+    // Remove from dropdown
+    setCategoryOptions(prev => prev.filter(c => c !== cat));
+    // If currently selected, clear
+    if (category === cat) setCategory("");
   };
 
   const handleEditDropdownCategory = (cat) => {
@@ -167,21 +224,16 @@ function TodoApp() {
 
   const handleSaveDropdownCategory = async (oldCat) => {
     if (!editingDropdownValue.trim() || categoryOptions.includes(editingDropdownValue.trim())) return;
-    setLoading(true);
-    try {
-      // Update in Firestore
-      const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
-      const match = catsSnapshot.docs.find(d => d.data().name === oldCat);
-      if (match) {
-        await updateDoc(categoryDoc(db, "categories", match.id), { name: editingDropdownValue.trim() });
-      }
-      setCategoryOptions(prev => prev.map(c => c === oldCat ? editingDropdownValue.trim() : c));
-      if (category === oldCat) setCategory(editingDropdownValue.trim());
-      setEditingDropdownCategory(null);
-      setEditingDropdownValue("");
-    } finally {
-      setLoading(false);
+    // Update in Firestore
+    const catsSnapshot = await getDocs(categoryCollection(db, "categories"));
+    const match = catsSnapshot.docs.find(d => d.data().name === oldCat);
+    if (match) {
+      await updateDoc(categoryDoc(db, "categories", match.id), { name: editingDropdownValue.trim() });
     }
+    setCategoryOptions(prev => prev.map(c => c === oldCat ? editingDropdownValue.trim() : c));
+    if (category === oldCat) setCategory(editingDropdownValue.trim());
+    setEditingDropdownCategory(null);
+    setEditingDropdownValue("");
   };
 
   const handleCancelDropdownEdit = () => {
@@ -237,36 +289,6 @@ function TodoApp() {
       transition: "background 0.2s",
       fontFamily: "'Nunito Sans', Inter, sans-serif"
     }}>
-      {loading && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          background: "rgba(0,0,0,0.18)",
-          zIndex: 99999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          pointerEvents: "all"
-        }}>
-          <div style={{
-            width: 60,
-            height: 60,
-            border: "6px solid #e0e7ff",
-            borderTop: `6px solid ${darkMode ? '#6366f1' : '#0070f3'}`,
-            borderRadius: "50%",
-            animation: "copilot-spin 1s linear infinite"
-          }} />
-          <style>{`
-            @keyframes copilot-spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
-      )}
       {/* Overlay for readability */}
       <div style={{
         position: "absolute",
@@ -649,78 +671,128 @@ function TodoApp() {
             Add
           </button>
         </div>
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {todos.map((todo, idx) => (
-            <li
-              key={todo.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "12px 0",
-                borderBottom: idx !== todos.length - 1 ? (darkMode ? "1px solid #35356a" : "1px solid #e5e7eb") : "none",
-                flexWrap: "wrap"
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={!!completed[todo.id]}
-                onChange={() => handleToggleCompleted(todo.id)}
-                style={{
-                  marginRight: 14,
-                  width: 20,
-                  height: 20,
-                  accentColor: darkMode ? '#a5b4fc' : '#6366f1',
-                  cursor: 'pointer',
-                  background: darkMode ? '#23234a' : undefined
-                }}
-              />
-              <span
-                style={{
-                  color: completed[todo.id] ? (darkMode ? '#52525b' : '#a0aec0') : (darkMode ? '#f3f4f6' : '#1a202c'),
-                  flex: 1,
-                  fontSize: 17,
-                  wordBreak: "break-word",
-                  textDecoration: completed[todo.id] ? 'line-through' : 'none',
-                  opacity: completed[todo.id] ? 0.6 : 1,
-                  transition: 'all 0.18s',
-                  fontFamily: "'Nunito Sans', Inter, sans-serif"
-                }}
-              >
-                {todo.text}
-                {todo.category && (
-                  <span style={{
-                    background: darkMode ? "#3730a3" : "#e0e7ff",
-                    color: darkMode ? "#e0e7ff" : "#3730a3",
-                    borderRadius: "4px",
-                    padding: "2px 8px",
-                    marginLeft: "10px",
-                    fontSize: "14px"
-                  }}>
-                    {todo.category}
-                  </span>
-                )}
-              </span>
-              <button
-                onClick={() => handleDelete(todo.id)}
-                style={{
-                  background: "#ff5a5f",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "4px",
-                  padding: "6px 14px",
-                  cursor: "pointer",
-                  fontSize: "15px",
-                  fontWeight: 500,
-                  boxShadow: "0 1px 4px rgba(255,90,95,0.08)",
-                  marginTop: 6
-                }}
-              >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
+        <DndProvider backend={HTML5Backend}>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {todos.map((todo, idx) => (
+              <DraggableTodo key={todo.id} todo={todo} idx={idx} moveTodo={moveTodo}>
+                <li
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 0",
+                    borderBottom: idx !== todos.length - 1 ? (darkMode ? "1px solid #35356a" : "1px solid #e5e7eb") : "none",
+                    flexWrap: "wrap"
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!completed[todo.id]}
+                    onChange={() => handleToggleCompleted(todo.id)}
+                    style={{
+                      marginRight: 14,
+                      width: 20,
+                      height: 20,
+                      accentColor: darkMode ? '#a5b4fc' : '#6366f1',
+                      cursor: 'pointer',
+                      background: darkMode ? '#23234a' : undefined
+                    }}
+                  />
+                  {editingTodoId === todo.id ? (
+                    <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input
+                        type="text"
+                        value={editingTodoText}
+                        onChange={e => setEditingTodoText(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleSaveEditTodo(todo);
+                          if (e.key === 'Escape') handleCancelEditTodo();
+                        }}
+                        autoFocus
+                        style={{
+                          flex: 1,
+                          fontSize: 17,
+                          padding: '6px 10px',
+                          borderRadius: 6,
+                          border: darkMode ? '1.5px solid #6366f1' : '1.5px solid #cbd5e1',
+                          background: darkMode ? '#23234a' : '#f9fafb',
+                          color: darkMode ? '#f3f4f6' : '#1a202c',
+                          fontFamily: "'Nunito Sans', Inter, sans-serif"
+                        }}
+                      />
+                      <button
+                        onClick={() => handleSaveEditTodo(todo)}
+                        style={{
+                          background: '#10b981', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                        }}
+                      >Save</button>
+                      <button
+                        onClick={handleCancelEditTodo}
+                        style={{
+                          background: '#e5e7eb', color: '#333', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                        }}
+                      >Cancel</button>
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        color: completed[todo.id] ? (darkMode ? '#52525b' : '#a0aec0') : (darkMode ? '#f3f4f6' : '#1a202c'),
+                        flex: 1,
+                        fontSize: 17,
+                        wordBreak: "break-word",
+                        textDecoration: completed[todo.id] ? 'line-through' : 'none',
+                        opacity: completed[todo.id] ? 0.6 : 1,
+                        transition: 'all 0.18s',
+                        fontFamily: "'Nunito Sans', Inter, sans-serif",
+                        display: 'flex', alignItems: 'center', gap: 8
+                      }}
+                    >
+                      {todo.text}
+                      {todo.category && (
+                        <span style={{
+                          background: darkMode ? "#3730a3" : "#e0e7ff",
+                          color: darkMode ? "#e0e7ff" : "#3730a3",
+                          borderRadius: "4px",
+                          padding: "2px 8px",
+                          marginLeft: "10px",
+                          fontSize: "14px"
+                        }}>
+                          {todo.category}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                    {editingTodoId !== todo.id && (
+                      <button
+                        onClick={() => handleEditTodo(todo)}
+                        style={{
+                          background: '#f3f4f6', color: '#0070f3', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                        }}
+                      >Edit</button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(todo.id)}
+                      style={{
+                        background: "#ff5a5f",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "4px",
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                        fontSize: "15px",
+                        fontWeight: 500,
+                        boxShadow: "0 1px 4px rgba(255,90,95,0.08)"
+                      }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              </DraggableTodo>
+            ))}
+          </ul>
+        </DndProvider>
       </div>
     </div>
   );
