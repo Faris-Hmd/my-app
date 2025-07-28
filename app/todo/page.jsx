@@ -460,6 +460,7 @@ function TodoApp() {
       {/* Shared Navbar */}
       <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
       <div
+        className="copilot-todo-main"
         style={{
           maxWidth: "480px",
           margin: "0 auto",
@@ -489,15 +490,58 @@ function TodoApp() {
             Please login to view your todos.
           </div>
         )}
-        <h2 style={{ textAlign: "center", color: darkMode ? "#f3f4f6" : "#222", fontWeight: 700, fontSize: 28, marginBottom: 24, fontFamily: "'Nunito Sans', Inter, sans-serif" }}>To-Do List</h2>
+        <h2 className="copilot-todo-title" style={{ textAlign: "center", color: darkMode ? "#f3f4f6" : "#222", fontWeight: 700, fontSize: 28, marginBottom: 24, fontFamily: "'Nunito Sans', Inter, sans-serif" }}>To-Do List</h2>
         {user && (
-        <div style={{
+        <div className="copilot-todo-inputs" style={{
           display: "flex",
           flexDirection: "column",
           gap: "0.5rem",
           marginBottom: "22px",
           alignItems: "stretch",
         }}>
+      <style>{`
+        @media (max-width: 600px) {
+          .copilot-todo-main {
+            max-width: 99vw !important;
+            padding: 12px 2vw 12px 2vw !important;
+            border-radius: 12px !important;
+          }
+          .copilot-todo-title {
+            font-size: 20px !important;
+            margin-bottom: 12px !important;
+          }
+          .copilot-todo-inputs input[type="text"] {
+            font-size: 15px !important;
+            padding: 8px 8px !important;
+            border-radius: 7px !important;
+          }
+          .copilot-todo-inputs button {
+            font-size: 15px !important;
+            padding: 8px 0 !important;
+            border-radius: 7px !important;
+          }
+        }
+        @media (max-width: 420px) {
+          .copilot-todo-main {
+            padding: 6px 1vw 6px 1vw !important;
+            border-radius: 7px !important;
+          }
+          .copilot-todo-title {
+            font-size: 16px !important;
+            margin-bottom: 7px !important;
+          }
+          .copilot-todo-inputs input[type="text"] {
+            font-size: 13px !important;
+            padding: 6px 4px !important;
+            border-radius: 5px !important;
+          }
+          .copilot-todo-inputs button {
+            font-size: 13px !important;
+            padding: 6px 0 !important;
+            border-radius: 5px !important;
+          }
+        }
+      `}</style>
           <input
             type="text"
             value={input}
