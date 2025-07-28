@@ -4,6 +4,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { db } from "../db/firebase";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   addDoc,
@@ -74,6 +75,7 @@ function TodoApp() {
   const [editingTodoId, setEditingTodoId] = useState(null);
   const [editingTodoText, setEditingTodoText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
   // Inject Nunito Sans font from Google Fonts
   useEffect(() => {
     if (!document.getElementById('nunito-sans-font')) {
@@ -112,14 +114,28 @@ function TodoApp() {
   }, [darkMode]);
 
   useEffect(() => {
+    const auth = getAuth();
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+    });
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setTodos([]);
+      return;
+    }
     const unsub = onSnapshot(collection(db, "todos"), (snapshot) => {
-      // Sort by 'order' field if present, fallback to created order
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        text: doc.data().text,
-        category: doc.data().category || "",
-        order: doc.data().order ?? 0
-      }));
+      // Only show todos for this user
+      const docs = snapshot.docs
+        .filter(doc => doc.data().uid === user.uid)
+        .map(doc => ({
+          id: doc.id,
+          text: doc.data().text,
+          category: doc.data().category || "",
+          order: doc.data().order ?? 0
+        }));
       docs.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       setTodos(docs);
     });
@@ -139,7 +155,7 @@ function TodoApp() {
       });
     });
     return () => unsub();
-  }, []);
+  }, [user]);
 
   // Move todo in the list and persist order
   const moveTodo = async (from, to) => {
@@ -155,11 +171,11 @@ function TodoApp() {
   };
 
   const handleAdd = async () => {
-    if (input.trim() !== "") {
+    if (input.trim() !== "" && user) {
       setLoading(true);
       let cat = category;
       if (cat === "Other") cat = customCategory.trim();
-      await addDoc(collection(db, "todos"), { text: input, category: cat });
+      await addDoc(collection(db, "todos"), { text: input, category: cat, uid: user.uid });
       // Save new custom category to Firestore if not already present
       if (cat && !["Work", "Personal", "Shopping", "Study"].includes(cat) && !categoryOptions.includes(cat)) {
         await addCategory(cat);
@@ -303,6 +319,25 @@ function TodoApp() {
   }, [categoryOptions, editingDropdownCategory]);
 
   const dndBackend = isTouchDevice() ? TouchBackend : HTML5Backend;
+  // Google Auth handlers
+  const handleLogin = async () => {
+    setLoading(true);
+    const auth = getAuth();
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      alert("Login failed");
+    }
+    setLoading(false);
+  };
+  const handleLogout = async () => {
+    setLoading(true);
+    const auth = getAuth();
+    await signOut(auth);
+    setLoading(false);
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -311,6 +346,88 @@ function TodoApp() {
       transition: "background 0.2s",
       fontFamily: "'Nunito Sans', Inter, sans-serif"
     }}>
+      {/* Google Auth UI - moved to left */}
+      <div style={{ position: 'absolute', top: 18, left: 18, zIndex: 100, maxWidth: '90vw' }}>
+        {user ? (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+              background: 'rgba(255,255,255,0.92)',
+              borderRadius: 10,
+              padding: '4px 8px',
+              boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+              minWidth: 0,
+              maxWidth: 320,
+            }}
+          >
+            {/* Show Google profile image if available, else fallback to cat avatar PNG */}
+            <span style={{ width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: '#f3f4f6', border: '1.5px solid #cbd5e1', overflow: 'hidden', flexShrink: 0 }}>
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="user avatar"
+                  style={{ width: 26, height: 26, objectFit: 'cover', borderRadius: '50%', background: '#fff' }}
+                  onError={e => { e.target.onerror = null; e.target.src = 'https://raw.githubusercontent.com/Faris-Hmd/cdn-assets/main/cat-avatar.png'; }}
+                />
+              ) : (
+                <img
+                  src="https://raw.githubusercontent.com/Faris-Hmd/cdn-assets/main/cat-avatar.png"
+                  alt="cat avatar"
+                  style={{ width: 26, height: 26, objectFit: 'cover', borderRadius: '50%', background: '#fff' }}
+                />
+              )}
+            </span>
+            <span
+              style={{
+                color: '#23234a',
+                fontWeight: 600,
+                fontSize: 14,
+                background: 'none',
+                borderRadius: 6,
+                padding: '2px 6px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 120,
+                display: 'inline-block',
+              }}
+              title={user.displayName || user.email}
+            >
+              {user.displayName || user.email}
+            </span>
+            <button
+              onClick={handleLogout}
+              style={{
+                background: '#ff5a5f',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                padding: '4px 10px',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 13,
+                marginLeft: 2,
+                marginTop: 2,
+                flexShrink: 0,
+              }}
+            >
+              Logout
+            </button>
+            <style>{`
+              @media (max-width: 480px) {
+                .copilot-userbar { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
+                .copilot-userbar span { max-width: 90vw !important; font-size: 13px !important; }
+                .copilot-userbar button { width: 100%; margin-left: 0 !important; }
+              }
+            `}</style>
+          </div>
+        ) : (
+          <button onClick={handleLogin} style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600, fontSize: 16 }}>Login with Google</button>
+        )}
+      </div>
       {/* Loading overlay */}
       {loading && (
         <div style={{
@@ -348,63 +465,60 @@ function TodoApp() {
         boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.18)" : "0 2px 8px rgba(0,0,0,0.06)",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         position: "relative",
         zIndex: 1
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 36, width: 36 }}>
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="18" cy="18" r="16" fill="#fff" fillOpacity="0.13" stroke="#fff" strokeWidth="2" />
-              <path d="M12.5 18.5L17 23L24 15" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <div />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginRight: 18 }}>
+          <button
+            onClick={() => setDarkMode(d => !d)}
+            style={{
+              background: darkMode ? "rgba(24,24,27,0.92)" : "rgba(255,255,255,0.92)",
+              border: darkMode ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
+              borderRadius: "50%",
+              width: 38,
+              height: 38,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.04)",
+              transition: "all 0.18s",
+              outline: "none"
+            }}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? (
+              // Moon icon
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.5 13.5C16.5 13.83 15.42 14 14.25 14C10.11 14 6.75 10.64 6.75 6.5C6.75 5.33 6.92 4.25 7.25 3.25C4.13 4.25 2 7.13 2 10.5C2 14.64 5.36 18 9.5 18C12.87 18 15.75 15.87 16.75 12.75Z" fill="#fbbf24"/>
+              </svg>
+            ) : (
+              // Sun icon
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="11" cy="11" r="5" fill="#fbbf24"/>
+                <g stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round">
+                  <line x1="11" y1="1.5" x2="11" y2="4"/>
+                  <line x1="11" y1="18" x2="11" y2="20.5"/>
+                  <line x1="1.5" y1="11" x2="4" y2="11"/>
+                  <line x1="18" y1="11" x2="20.5" y2="11"/>
+                  <line x1="4.93" y1="4.93" x2="6.6" y2="6.6"/>
+                  <line x1="15.4" y1="15.4" x2="17.07" y2="17.07"/>
+                  <line x1="4.93" y1="17.07" x2="6.6" y2="15.4"/>
+                  <line x1="15.4" y1="6.6" x2="17.07" y2="4.93"/>
+                </g>
+              </svg>
+            )}
+          </button>
+          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 44, width: 44 }}>
+            {/* Logo on the right */}
+            <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="22" cy="22" r="20" fill="#fff" fillOpacity="0.18" stroke="#fff" strokeWidth="2.5" />
+              <path d="M14.5 22.5L20 28L30 17" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          <span style={{ color: "#fff", fontWeight: 700, fontSize: 22, letterSpacing: 1 }}>Todo with Copilot</span>
         </div>
-        <button
-          onClick={() => setDarkMode(d => !d)}
-          style={{
-            position: "absolute",
-            right: 24,
-            top: "50%",
-            transform: "translateY(-50%)",
-            background: darkMode ? "rgba(24,24,27,0.92)" : "rgba(255,255,255,0.92)",
-            border: darkMode ? "1.5px solid #6366f1" : "1.5px solid #cbd5e1",
-            borderRadius: "50%",
-            width: 38,
-            height: 38,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.18)" : "0 1px 4px rgba(0,0,0,0.04)",
-            transition: "all 0.18s",
-            outline: "none"
-          }}
-          aria-label="Toggle dark mode"
-        >
-          {darkMode ? (
-            // Moon icon
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17.5 13.5C16.5 13.83 15.42 14 14.25 14C10.11 14 6.75 10.64 6.75 6.5C6.75 5.33 6.92 4.25 7.25 3.25C4.13 4.25 2 7.13 2 10.5C2 14.64 5.36 18 9.5 18C12.87 18 15.75 15.87 16.75 12.75Z" fill="#fbbf24"/>
-            </svg>
-          ) : (
-            // Sun icon
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="11" cy="11" r="5" fill="#fbbf24"/>
-              <g stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="11" y1="1.5" x2="11" y2="4"/>
-                <line x1="11" y1="18" x2="11" y2="20.5"/>
-                <line x1="1.5" y1="11" x2="4" y2="11"/>
-                <line x1="18" y1="11" x2="20.5" y2="11"/>
-                <line x1="4.93" y1="4.93" x2="6.6" y2="6.6"/>
-                <line x1="15.4" y1="15.4" x2="17.07" y2="17.07"/>
-                <line x1="4.93" y1="17.07" x2="6.6" y2="15.4"/>
-                <line x1="15.4" y1="6.6" x2="17.07" y2="4.93"/>
-              </g>
-            </svg>
-          )}
-        </button>
       </nav>
       <div
         style={{
@@ -431,7 +545,13 @@ function TodoApp() {
           overflow: "hidden"
         }}
       >
+        {!user && (
+          <div style={{ textAlign: 'center', margin: '40px 0', color: '#333', fontWeight: 600, fontSize: 20 }}>
+            Please login to view your todos.
+          </div>
+        )}
         <h2 style={{ textAlign: "center", color: darkMode ? "#f3f4f6" : "#222", fontWeight: 700, fontSize: 28, marginBottom: 24, fontFamily: "'Nunito Sans', Inter, sans-serif" }}>To-Do List</h2>
+        {user && (
         <div style={{
           display: "flex",
           flexDirection: "column",
@@ -710,6 +830,7 @@ function TodoApp() {
             Add
           </button>
         </div>
+        )}
         <DndProvider backend={dndBackend}>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             {todos.map((todo, idx) => (
