@@ -1,5 +1,6 @@
 import React from "react";
 import { usePathname } from "next/navigation";
+import styles from "./Navbar.module.css";
 
 export default function Navbar({ darkMode, setDarkMode }) {
   const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
@@ -10,48 +11,36 @@ export default function Navbar({ darkMode, setDarkMode }) {
   let linkHref = isAbout ? "/todo" : "/about";
   let linkLabel = isAbout ? "To-Do" : "About";
   return (
-    <nav style={{
-      width: "100%",
-      background: darkMode ? "#23234a" : "#0070f3",
-      padding: "18px 0 16px 0",
-      marginBottom: 32,
-      boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.18)" : "0 2px 8px rgba(0,0,0,0.06)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      position: "relative",
-      zIndex: 1
-    }}>
+    <nav
+      className={styles.navbar}
+      style={{
+        background: darkMode ? "#23234a" : "#0070f3",
+        boxShadow: darkMode ? "0 2px 8px rgba(0,0,0,0.18)" : "0 2px 8px rgba(0,0,0,0.06)"
+      }}
+    >
       <div style={{ flex: 1 }} />
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', flex: 1 }}>
+      <div className={styles.rightColumn}>
         {/* User detail row (replace with actual user info if needed) */}
        
-        <div className="copilot-navbar-links" style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end',
-          gap: 14,
-          background: darkMode ? 'rgba(35,35,74,0.18)' : 'rgba(255,255,255,0.82)',
-          borderRadius: 10,
-          boxShadow: darkMode ? '0 1px 6px rgba(99,102,241,0.08)' : '0 1px 6px rgba(0,0,0,0.04)',
-          padding: '3px 10px',
-          minWidth: 0,
-          maxWidth: 340,
-          marginRight: 0,
-        }}>
-          <a href={linkHref} className="copilot-navbar-link" style={{
-            color: darkMode ? '#a5b4fc' : '#23234a',
-            background: darkMode ? 'rgba(99,102,241,0.13)' : 'rgba(255,255,255,0.92)',
-            border: darkMode ? '1.5px solid #6366f1' : '1.5px solid #cbd5e1',
-            borderRadius: 8,
-            padding: '6px 14px',
-            fontWeight: 600,
-            fontSize: 15,
-            textDecoration: 'none',
-            transition: 'background 0.18s, color 0.18s',
-            marginRight: 0,
-            boxShadow: darkMode ? '0 1px 4px rgba(99,102,241,0.08)' : '0 1px 4px rgba(0,0,0,0.03)'
-          }}>{linkLabel}</a>
+        <div
+          className={styles.navbarLinks + " copilot-navbar-links"}
+          style={{
+            background: darkMode ? 'rgba(35,35,74,0.18)' : 'rgba(255,255,255,0.82)',
+            boxShadow: darkMode ? '0 1px 6px rgba(99,102,241,0.08)' : '0 1px 6px rgba(0,0,0,0.04)'
+          }}
+        >
+          <a
+            href={linkHref}
+            className={styles.navbarLink + " copilot-navbar-link"}
+            style={{
+              color: darkMode ? '#a5b4fc' : '#23234a',
+              background: darkMode ? 'rgba(99,102,241,0.13)' : 'rgba(255,255,255,0.92)',
+              border: darkMode ? '1.5px solid #6366f1' : '1.5px solid #cbd5e1',
+              boxShadow: darkMode ? '0 1px 4px rgba(99,102,241,0.08)' : '0 1px 4px rgba(0,0,0,0.03)'
+            }}
+          >
+            {linkLabel}
+          </a>
           <button
             onClick={() => setDarkMode(d => !d)}
             className="copilot-navbar-darkmode"
@@ -102,46 +91,7 @@ export default function Navbar({ darkMode, setDarkMode }) {
           </span>
         </div>
       </div>
-      <style>{`
-        @media (max-width: 600px) {
-          .copilot-navbar-user {
-            font-size: 12px !important;
-            margin-bottom: 1px !important;
-          }
-          .copilot-navbar-links {
-            gap: 4px !important;
-            margin-right: 2vw !important;
-            padding: 2px 2vw !important;
-            max-width: 99vw !important;
-          }
-          .copilot-navbar-link {
-            padding: 4px 8px !important;
-            font-size: 13px !important;
-            margin-right: 0 !important;
-          }
-          .copilot-navbar-darkmode {
-            width: 28px !important;
-            height: 28px !important;
-          }
-        }
-        @media (max-width: 420px) {
-          .copilot-navbar-user {
-            font-size: 11px !important;
-          }
-          .copilot-navbar-links {
-            flex-direction: column !important;
-            align-items: flex-end !important;
-            gap: 1px !important;
-            padding: 1px 1vw !important;
-          }
-          .copilot-navbar-link {
-            width: 100%;
-            text-align: right;
-            padding: 3px 4px !important;
-            font-size: 12px !important;
-          }
-        }
-      `}</style>
+      {/* Styles moved to Navbar.module.css */}
     </nav>
   );
 }

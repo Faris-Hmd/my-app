@@ -1,8 +1,5 @@
 "use client"
 import  { useState, useEffect } from "react";
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { TouchBackend } from 'react-dnd-touch-backend';
 import { db } from "../db/firebase";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
 import {
@@ -22,54 +19,11 @@ import React, { useRef } from "react";
 import Navbar from "../components/Navbar";
 import { createPortal } from "react-dom";
 
-const ITEM_TYPE = 'TODO_ITEM';
 
-function DraggableTodo({ todo, idx, moveTodo, children }) {
-  const ref = useRef(null);
-  const [, drop] = useDrop({
-    accept: ITEM_TYPE,
-    hover(item) {
-      if (item.idx === idx) return;
-      moveTodo(item.idx, idx);
-      item.idx = idx;
-    },
-  });
-  const [{ isDragging }, drag] = useDrag({
-    type: ITEM_TYPE,
-    item: { id: todo.id, idx },
-    collect: (monitor) => ({ isDragging: monitor.isDragging() })
-  });
-  drag(drop(ref));
-  return (
-    <li
-      ref={ref}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        cursor: 'grab',
-        ...children.props.style
-      }}
-    >
-      {children.props.children}
-    </li>
-  );
-}
 
-function reorderArray(arr, from, to) {
-  const updated = [...arr];
-  const [removed] = updated.splice(from, 1);
-  updated.splice(to, 0, removed);
-  return updated;
-}
 
-function isTouchDevice() {
-  if (typeof window === 'undefined') return false;
-  return (
-    'ontouchstart' in window ||
-    (window.DocumentTouch && document instanceof window.DocumentTouch) ||
-    navigator.maxTouchPoints > 0 ||
-    navigator.msMaxTouchPoints > 0
-  );
-}
+
+
 
 function TodoApp() {
   // ...existing code...
@@ -158,18 +112,7 @@ function TodoApp() {
     return () => unsub();
   }, [user]);
 
-  // Move todo in the list and persist order
-  const moveTodo = async (from, to) => {
-    setLoading(true);
-    setTodos(prev => {
-      const updated = reorderArray(prev, from, to);
-      // Update order in Firestore
-      Promise.all(
-        updated.map((todo, idx) => updateDoc(doc(db, "todos", todo.id), { order: idx }))
-      ).finally(() => setLoading(false));
-      return updated;
-    });
-  };
+
 
   const handleAdd = async () => {
     if (input.trim() !== "" && user) {
@@ -319,7 +262,7 @@ function TodoApp() {
     }
   }, [categoryOptions, editingDropdownCategory]);
 
-  const dndBackend = isTouchDevice() ? TouchBackend : HTML5Backend;
+
   // Google Auth handlers
   const handleLogin = async () => {
     setLoading(true);
@@ -353,77 +296,85 @@ function TodoApp() {
           <div
             style={{
               display: 'flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              gap: 8,
-              flexWrap: 'wrap',
               background: 'rgba(255,255,255,0.92)',
-              borderRadius: 10,
-              padding: '4px 8px',
-              boxShadow: '0 1px 6px rgba(0,0,0,0.07)',
+              borderRadius: 8,
+              padding: '4px 6px 4px 6px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
               minWidth: 0,
-              maxWidth: 320,
+              maxWidth: 80,
+              width: '100%',
+              gap: 2,
+              overflow: 'hidden',
+              boxSizing: 'border-box',
             }}
           >
-            {/* Show Google profile image if available, else fallback to cat avatar PNG */}
-            <span style={{ width: 28, height: 28, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: '#f3f4f6', border: '1.5px solid #cbd5e1', overflow: 'hidden', flexShrink: 0 }}>
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt="user avatar"
-                  style={{ width: 26, height: 26, objectFit: 'cover', borderRadius: '50%', background: '#fff' }}
-                  onError={e => { e.target.onerror = null; e.target.src = 'https://raw.githubusercontent.com/Faris-Hmd/cdn-assets/main/cat-avatar.png'; }}
-                />
-              ) : (
-                <img
-                  src="https://raw.githubusercontent.com/Faris-Hmd/cdn-assets/main/cat-avatar.png"
-                  alt="cat avatar"
-                  style={{ width: 26, height: 26, objectFit: 'cover', borderRadius: '50%', background: '#fff' }}
-                />
-              )}
-            </span>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'center', gap: 3 }}>
+              {/* Logout icon button on left */}
+              <button
+                onClick={handleLogout}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 20,
+                  height: 20,
+                  borderRadius: '50%',
+                  transition: 'background 0.15s',
+                }}
+                title="Logout"
+              >
+                <svg width="16" height="16" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15.25 7.75L17.5 11L15.25 14.25" stroke="#ff5a5f" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17.5 11H9.5" stroke="#ff5a5f" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12.5 4.5V3.75C12.5 3.05964 11.9404 2.5 11.25 2.5H5.75C5.05964 2.5 4.5 3.05964 4.5 3.75V18.25C4.5 18.9404 5.05964 19.5 5.75 19.5H11.25C11.9404 19.5 12.5 18.9404 12.5 18.25V17.5" stroke="#ff5a5f" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              {/* User image */}
+              <span style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: '#f3f4f6', border: '1px solid #cbd5e1', overflow: 'hidden', flexShrink: 0 }}>
+                {user.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="user avatar"
+                    style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: '50%', background: '#fff' }}
+                    onError={e => { e.target.onerror = null; e.target.src = 'https://raw.githubusercontent.com/Faris-Hmd/cdn-assets/main/cat-avatar.png'; }}
+                  />
+                ) : (
+                  <img
+                    src="https://raw.githubusercontent.com/Faris-Hmd/cdn-assets/main/cat-avatar.png"
+                    alt="cat avatar"
+                    style={{ width: 20, height: 20, objectFit: 'cover', borderRadius: '50%', background: '#fff' }}
+                  />
+                )}
+              </span>
+            </div>
+            {/* User name below image */}
             <span
               style={{
                 color: '#23234a',
-                fontWeight: 600,
-                fontSize: 14,
+                fontWeight: 500,
+                fontSize: 11,
                 background: 'none',
-                borderRadius: 6,
-                padding: '2px 6px',
+                borderRadius: 4,
+                padding: '1px 2px 0 2px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                maxWidth: 120,
-                display: 'inline-block',
+                maxWidth: 60,
+                display: 'block',
+                textAlign: 'center',
+                marginTop: 1,
+                wordBreak: 'break-all',
               }}
               title={user.displayName || user.email}
             >
               {user.displayName || user.email}
             </span>
-            <button
-              onClick={handleLogout}
-              style={{
-                background: '#ff5a5f',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                padding: '4px 10px',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 13,
-                marginLeft: 2,
-                marginTop: 2,
-                flexShrink: 0,
-              }}
-            >
-              Logout
-            </button>
-            <style>{`
-              @media (max-width: 480px) {
-                .copilot-userbar { flex-direction: column !important; align-items: flex-start !important; gap: 4px !important; }
-                .copilot-userbar span { max-width: 90vw !important; font-size: 13px !important; }
-                .copilot-userbar button { width: 100%; margin-left: 0 !important; }
-              }
-            `}</style>
           </div>
         ) : (
           <button onClick={handleLogin} style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600, fontSize: 16 }}>Login with Google</button>
@@ -458,19 +409,7 @@ function TodoApp() {
         pointerEvents: "none"
       }} />
       {/* To-Do App Title on its own line */}
-      <div style={{ width: '100%', textAlign: 'center', margin: '0 0 2px 0' }}>
-        <span className="copilot-todo-title" style={{
-          color: darkMode ? '#f3f4f6' : '#222',
-          fontWeight: 700,
-          fontSize: 28,
-          fontFamily: "'Nunito Sans', Inter, sans-serif",
-          letterSpacing: 0.2,
-          display: 'inline-block',
-          margin: '0 auto',
-          padding: '0 0 2px 0',
-          lineHeight: 1.2
-        }}>To-Do List</span>
-      </div>
+   
       <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
       <div
         className="copilot-todo-main"
@@ -827,132 +766,129 @@ function TodoApp() {
           </button>
         </div>
         )}
-        <DndProvider backend={dndBackend}>
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {todos.map((todo, idx) => (
-              <DraggableTodo key={todo.id} todo={todo} idx={idx} moveTodo={moveTodo}>
-                <li
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "12px 0",
-                    borderBottom: idx !== todos.length - 1 ? (darkMode ? "1px solid #35356a" : "1px solid #e5e7eb") : "none",
-                    flexWrap: "wrap"
-                  }}
-                >
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {todos.map((todo, idx) => (
+            <li
+              key={todo.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 0",
+                borderBottom: idx !== todos.length - 1 ? (darkMode ? "1px solid #35356a" : "1px solid #e5e7eb") : "none",
+                flexWrap: "wrap"
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={!!completed[todo.id]}
+                onChange={() => handleToggleCompleted(todo.id)}
+                style={{
+                  marginRight: 14,
+                  width: 20,
+                  height: 20,
+                  accentColor: darkMode ? '#a5b4fc' : '#6366f1',
+                  cursor: 'pointer',
+                  background: darkMode ? '#23234a' : undefined
+                }}
+              />
+              {editingTodoId === todo.id ? (
+                <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
                   <input
-                    type="checkbox"
-                    checked={!!completed[todo.id]}
-                    onChange={() => handleToggleCompleted(todo.id)}
+                    type="text"
+                    value={editingTodoText}
+                    onChange={e => setEditingTodoText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleSaveEditTodo(todo);
+                      if (e.key === 'Escape') handleCancelEditTodo();
+                    }}
+                    autoFocus
                     style={{
-                      marginRight: 14,
-                      width: 20,
-                      height: 20,
-                      accentColor: darkMode ? '#a5b4fc' : '#6366f1',
-                      cursor: 'pointer',
-                      background: darkMode ? '#23234a' : undefined
+                      flex: 1,
+                      fontSize: 17,
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      border: darkMode ? '1.5px solid #6366f1' : '1.5px solid #cbd5e1',
+                      background: darkMode ? '#23234a' : '#f9fafb',
+                      color: darkMode ? '#f3f4f6' : '#1a202c',
+                      fontFamily: "'Nunito Sans', Inter, sans-serif"
                     }}
                   />
-                  {editingTodoId === todo.id ? (
-                    <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <input
-                        type="text"
-                        value={editingTodoText}
-                        onChange={e => setEditingTodoText(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') handleSaveEditTodo(todo);
-                          if (e.key === 'Escape') handleCancelEditTodo();
-                        }}
-                        autoFocus
-                        style={{
-                          flex: 1,
-                          fontSize: 17,
-                          padding: '6px 10px',
-                          borderRadius: 6,
-                          border: darkMode ? '1.5px solid #6366f1' : '1.5px solid #cbd5e1',
-                          background: darkMode ? '#23234a' : '#f9fafb',
-                          color: darkMode ? '#f3f4f6' : '#1a202c',
-                          fontFamily: "'Nunito Sans', Inter, sans-serif"
-                        }}
-                      />
-                      <button
-                        onClick={() => handleSaveEditTodo(todo)}
-                        style={{
-                          background: '#10b981', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-                        }}
-                      >Save</button>
-                      <button
-                        onClick={handleCancelEditTodo}
-                        style={{
-                          background: '#e5e7eb', color: '#333', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-                        }}
-                      >Cancel</button>
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        color: completed[todo.id] ? (darkMode ? '#52525b' : '#a0aec0') : (darkMode ? '#f3f4f6' : '#1a202c'),
-                        flex: 1,
-                        fontSize: 17,
-                        wordBreak: "break-word",
-                        textDecoration: completed[todo.id] ? 'line-through' : 'none',
-                        opacity: completed[todo.id] ? 0.6 : 1,
-                        transition: 'all 0.18s',
-                        fontFamily: "'Nunito Sans', Inter, sans-serif",
-                        display: 'block',
-                        lineHeight: 1.3
-                      }}
-                    >
-                      <span style={{ display: 'block', marginBottom: todo.category ? 2 : 0 }}>{todo.text}</span>
-                      {todo.category && (
-                        <span style={{
-                          display: 'block',
-                          background: darkMode ? "#3730a3" : "#e0e7ff",
-                          color: darkMode ? "#e0e7ff" : "#3730a3",
-                          borderRadius: "4px",
-                          padding: "2px 8px",
-                          margin: 0,
-                          fontSize: "14px",
-                          width: 'fit-content',
-                          marginTop: 2
-                        }}>
-                          {todo.category}
-                        </span>
-                      )}
+                  <button
+                    onClick={() => handleSaveEditTodo(todo)}
+                    style={{
+                      background: '#10b981', color: '#fff', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >Save</button>
+                  <button
+                    onClick={handleCancelEditTodo}
+                    style={{
+                      background: '#e5e7eb', color: '#333', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >Cancel</button>
+                </span>
+              ) : (
+                <span
+                  style={{
+                    color: completed[todo.id] ? (darkMode ? '#52525b' : '#a0aec0') : (darkMode ? '#f3f4f6' : '#1a202c'),
+                    flex: 1,
+                    fontSize: 17,
+                    wordBreak: "break-word",
+                    textDecoration: completed[todo.id] ? 'line-through' : 'none',
+                    opacity: completed[todo.id] ? 0.6 : 1,
+                    transition: 'all 0.18s',
+                    fontFamily: "'Nunito Sans', Inter, sans-serif",
+                    display: 'block',
+                    lineHeight: 1.3
+                  }}
+                >
+                  <span style={{ display: 'block', marginBottom: todo.category ? 2 : 0 }}>{todo.text}</span>
+                  {todo.category && (
+                    <span style={{
+                      display: 'block',
+                      background: darkMode ? "#3730a3" : "#e0e7ff",
+                      color: darkMode ? "#e0e7ff" : "#3730a3",
+                      borderRadius: "4px",
+                      padding: "2px 8px",
+                      margin: 0,
+                      fontSize: "14px",
+                      width: 'fit-content',
+                      marginTop: 2
+                    }}>
+                      {todo.category}
                     </span>
                   )}
-                  <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                    {editingTodoId !== todo.id && (
-                      <button
-                        onClick={() => handleEditTodo(todo)}
-                        style={{
-                          background: '#f3f4f6', color: '#0070f3', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
-                        }}
-                      >Edit</button>
-                    )}
-                    <button
-                      onClick={() => handleDelete(todo.id)}
-                      style={{
-                        background: "#ff5a5f",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "4px",
-                        padding: "6px 14px",
-                        cursor: "pointer",
-                        fontSize: "15px",
-                        fontWeight: 500,
-                        boxShadow: "0 1px 4px rgba(255,90,95,0.08)"
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              </DraggableTodo>
-            ))}
-          </ul>
-        </DndProvider>
+                </span>
+              )}
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                {editingTodoId !== todo.id && (
+                  <button
+                    onClick={() => handleEditTodo(todo)}
+                    style={{
+                      background: '#f3f4f6', color: '#0070f3', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >Edit</button>
+                )}
+                <button
+                  onClick={() => handleDelete(todo.id)}
+                  style={{
+                    background: "#ff5a5f",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "4px",
+                    padding: "6px 14px",
+                    cursor: "pointer",
+                    fontSize: "15px",
+                    fontWeight: 500,
+                    boxShadow: "0 1px 4px rgba(255,90,95,0.08)"
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
