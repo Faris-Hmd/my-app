@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import styles from "../dashboard.module.css";
+import styles from "../../dashboard.module.css";
 
 export default function AddTodoModal({ show, onClose, onAdd }) {
   const [newTodo, setNewTodo] = useState({

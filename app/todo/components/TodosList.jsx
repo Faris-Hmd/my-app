@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import styles from "../dashboard.module.css";
+import styles from "../../dashboard.module.css";
 import TodoCard from "./TodoCard";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/app/db/firebase";
