@@ -1,5 +1,5 @@
 .modalLabel {
-  font-size: 0.98rem;
+  font-size: 1.08rem;
   font-weight: 500;
   color: #aab6ff;
   margin-bottom: 2px;
@@ -7,11 +7,11 @@
   display: block;
 }
 .modalInput {
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border-radius: 8px;
   border: 1px solid #6c63ff;
-  font-size: 1rem;
-  margin-bottom: 8px;
+  font-size: 1.08rem;
+  margin-bottom: 10px;
   background: #23272f;
   color: #fff;
 }
@@ -29,27 +29,37 @@
   z-index: 1000;
 }
 .modalContent {
-  background: #23272f;
-  padding: 16px 24px 24px 24px;
+  background: #1f2021;
+  padding: 20px 12px 24px 12px;
   border-radius: 12px;
   box-shadow: 0 6px 32px rgba(0, 0, 0, 0.25);
-  min-width: 320px;
-  max-width: 90vw;
+  min-width: 90vw;
+  max-width: 98vw;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
   color: #fff;
+}
+@media (min-width: 480px) {
+  .modalContent {
+    scale: 0.9;
+    min-width: 320px;
+    max-width: 400px;
+    padding: 24px 24px 28px 24px;
+  }
 }
 .cancelBtn {
   background: #363a42;
   color: #fff;
   border: none;
   border-radius: 24px;
-  padding: 8px 20px;
-  font-size: 1rem;
+  padding: 14px 0;
+  font-size: 1.08rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+  width: 100%;
 }
 .cancelBtn:hover {
   background: #6c63ff;
@@ -121,8 +131,8 @@
   color: #fff;
   border: none;
   border-radius: 24px;
-  padding: 8px 20px;
-  font-size: 1rem;
+  padding: 14px 0;
+  font-size: 1.08rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
@@ -144,7 +154,7 @@
   border-radius: 5px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.13);
   padding: 6px 8px 8px 8px;
-  min-width: 100%;
+  min-width: max-content;
 
   display: flex;
   flex-direction: column;
@@ -157,7 +167,7 @@
 }
 .taskDetail:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  /* transform: translateY(-2px); */
 }
 @media (min-width: 768px) {
   .taskDetail {
@@ -179,15 +189,21 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   justify-content: flex-start;
-  padding: 12px;
+  padding: 6px;
   max-width: 100%;
+  font-size: smaller;
 }
-@media (min-width: 768px) {
+@media (max-width: 480px) {
   .todosList {
-    padding: 8px 0;
-    flex-direction: row;
+    gap: 4px;
+    padding: 2px;
+  }
+  .taskDetail {
+    padding: 4px 4px 6px 4px;
+    margin-bottom: 2px;
+    font-size: 0.98rem;
   }
 }
 
@@ -290,7 +306,7 @@
 }
 .deleteBtn {
   position: absolute;
-  top: 8px;
+  bottom: 80px !important;
   right: 8px;
   background: #23272f;
   color: #bf1205;

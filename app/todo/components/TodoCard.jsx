@@ -33,31 +33,13 @@ export default function TodoCard({
           <FaPen style={{ fontSize: "1em" }} />
         </button>
       )}
-      {editId === task.id && task.status !== "Done" ? (
-        <input
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={() => onSaveEdit(task.id)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") onSaveEdit(task.id);
-          }}
-          autoFocus
-          style={{
-            fontSize: "1rem",
-            padding: "2px 8px",
-            borderRadius: "6px",
-            border: "1px solid #6c63ff",
-            marginBottom: 4,
-          }}
-        />
-      ) : (
-        <h2
-          style={{ cursor: "pointer" }}
-          className={task.status === "Done" ? styles.doneText : undefined}
-        >
-          {task.name}
-        </h2>
-      )}
+      {/* Remove inline edit input, always show name */}
+      <h2
+        style={{ cursor: "pointer" }}
+        className={task.status === "Done" ? styles.doneText : undefined}
+      >
+        {task.name}
+      </h2>
       <div className={styles.taskProject}>Category: {task.project}</div>
       {task.startDate && (
         <div className={styles.taskDate}>

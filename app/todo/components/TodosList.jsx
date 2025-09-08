@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styles from "../../dashboard.module.css";
 import TodoCard from "./TodoCard";
+import EditTodoModal from "./EditTodoModal";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/app/db/firebase";
 
@@ -13,8 +14,8 @@ export default function TodosList() {
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
-  const [editId, setEditId] = useState(null);
-  const [editValue, setEditValue] = useState("");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editTodo, setEditTodo] = useState(null);
 
   const fetchTodos = async () => {
     setLoading(true);
@@ -46,13 +47,17 @@ export default function TodosList() {
     fetchTodos();
   };
   const startEdit = (id, name) => {
-    setEditId(id);
-    setEditValue(name);
+    setEditTodo(allTodos.find((t) => t.id === id));
+    setShowEditModal(true);
   };
-  const saveEdit = async (id) => {
-    await updateDoc(doc(db, "todos", id), { name: editValue });
-    setEditId(null);
-    setEditValue("");
+  const saveEdit = async (id, newName, newProject, newPriority) => {
+    await updateDoc(doc(db, "todos", id), {
+      name: newName,
+      project: newProject,
+      priority: newPriority,
+    });
+    setShowEditModal(false);
+    setEditTodo(null);
     fetchTodos();
   };
   const handleDeleteClick = (id) => {
@@ -98,10 +103,6 @@ export default function TodosList() {
           key={task.id}
           task={task}
           onEdit={startEdit}
-          onSaveEdit={saveEdit}
-          editId={editId}
-          editValue={editValue}
-          setEditValue={setEditValue}
           onDelete={handleDeleteClick}
           onMarkAsDone={markAsDone}
           onUndoDone={undoDone}
@@ -111,6 +112,16 @@ export default function TodosList() {
           }}
         />
       ))}
+      {/* Edit Modal for Todo */}
+      <EditTodoModal
+        show={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditTodo(null);
+        }}
+        onSave={saveEdit}
+        todo={editTodo}
+      />
       {/* Warning Modal for Delete */}
       {showDeleteModal && (
         <div className={styles.modalOverlay}>
