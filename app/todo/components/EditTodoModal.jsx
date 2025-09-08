@@ -21,8 +21,26 @@ export default function EditTodoModal({ show, onClose, onSave, todo }) {
   };
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+        <button
+          className={styles.closeBtn}
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: "absolute",
+            top: 12,
+            right: 16,
+            background: "none",
+            border: "none",
+            fontSize: "1.6rem",
+            color: "#fff",
+            cursor: "pointer",
+            zIndex: 2,
+          }}
+        >
+          &times;
+        </button>
         <h3>Edit Todo</h3>
         <label className={styles.modalLabel} htmlFor="editTodoName">
           Todo Name
@@ -66,9 +84,6 @@ export default function EditTodoModal({ show, onClose, onSave, todo }) {
         </select>
         <button className={styles.saveBtn} onClick={handleSave}>
           Save
-        </button>
-        <button className={styles.cancelBtn} onClick={onClose}>
-          Close
         </button>
       </div>
     </div>
