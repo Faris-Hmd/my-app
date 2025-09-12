@@ -88,8 +88,7 @@ export default function TodoCard({
               >
                 {task.project}
               </span>
-              |&nbsp;
-              {task.startDate && (
+              {/* {task.startDate && (
                 <span className={styles.taskDate}>
                   {(() => {
                     const d = new Date(task.startDate);
@@ -102,10 +101,10 @@ export default function TodoCard({
                     return `${day}/${month} ${hour}:${min}`;
                   })()}
                 </span>
-              )}
+              )} */}
               {task.status === "Done" && task.finishDate && (
                 <span className={styles.taskDate}>
-                  |&nbsp;
+                  |&nbsp; Finshed in :
                   {(() => {
                     const d = new Date(task.finishDate);
                     const day = d.getDate().toString().padStart(2, "0");

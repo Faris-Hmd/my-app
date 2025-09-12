@@ -1,6 +1,7 @@
 import React, { useRef } from "react";
 import SidebarProgress from "./SidebarProgress";
 import styles from "../../dashboard.module.css";
+import { FaSignOutAlt } from "react-icons/fa";
 
 export default function Sidebar({ onClose }) {
   const sidebarRef = useRef();
@@ -16,21 +17,39 @@ export default function Sidebar({ onClose }) {
   }, [onClose]);
 
   return (
-    <aside
-      ref={sidebarRef}
-      className={styles.sidebar}
-      style={{ position: "fixed" }}
-    >
-      <button
-        className={styles.modalCloseBtn}
+    <>
+      <div
+        className={styles.sidebarOverlay}
         onClick={onClose}
-        aria-label="Close Sidebar"
+        aria-label="Close Sidebar Overlay"
+      />
+      <aside
+        ref={sidebarRef}
+        className={styles.sidebar}
+        style={{ position: "fixed" }}
       >
-        &times;
-      </button>
-      <div className={styles.sidebarTitle}>Todos</div>
-      <SidebarProgress />
-      {/* You can add navigation links or other sidebar content here */}
-    </aside>
+        <button
+          className={styles.modalCloseBtn}
+          onClick={onClose}
+          aria-label="Close Sidebar"
+        >
+          &times;
+        </button>
+        <div className={styles.sidebarTitle}>Todos</div>
+        <div className={styles.userInfoSidebar}>
+          <img
+            src="https://randomuser.me/api/portraits/men/32.jpg"
+            alt="User"
+            className={styles.userPhotoSidebar}
+          />
+          <div className={styles.userNameSidebar}>Faris Hmd</div>
+          <div className={styles.logoutButton}>
+            <FaSignOutAlt />
+          </div>
+        </div>
+        <SidebarProgress />
+        {/* You can add navigation links or other sidebar content here */}
+      </aside>
+    </>
   );
 }

@@ -39,7 +39,16 @@ export default function Header({ onAdd, setShowsideBar }) {
           />
         </svg>
       </div>
+
       <div className={styles.logo}>TODO</div>
+      <div className={styles.userInfoHeader}>
+        <img
+          src="https://randomuser.me/api/portraits/men/32.jpg"
+          alt="User"
+          className={styles.userPhotoHeader}
+        />
+        <div className={styles.userNameHeader}>Faris Hmd</div>
+      </div>
       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
         {/* <button className={styles.addTask} onClick={onAdd}>
           Add Todo <FaPlus />
