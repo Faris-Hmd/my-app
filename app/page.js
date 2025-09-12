@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { registerServiceWorker } from "./pwa-register";
 import styles from "./dashboard.module.css";
 import TodosList from "./todo/components/TodosList";
 import AddTodoModal from "./todo/components/AddTodoModal";
@@ -11,6 +12,7 @@ import Head from "next/head";
 export default function TodoDashboard() {
   useEffect(() => {
     document.body.classList.add("light-theme");
+    registerServiceWorker();
     return () => document.body.classList.remove("light-theme");
   }, []);
 
