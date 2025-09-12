@@ -112,8 +112,12 @@ export default function TodosList() {
     setDeleteId(null);
   };
 
-  // Show todos in their original order from localStorage
-  const allTodos = getLocalTodos();
+  // Show todos in newest-to-oldest order from localStorage
+  const allTodos = getLocalTodos().sort((a, b) => {
+    const dateA = a.startDate ? new Date(a.startDate) : new Date(0);
+    const dateB = b.startDate ? new Date(b.startDate) : new Date(0);
+    return dateB - dateA;
+  });
 
   if (loading)
     return (
