@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "../../dashboard.module.css";
 import TodoCard from "./TodoCard";
 import EditTodoModal from "./EditTodoModal";
+import { FaPlus } from "react-icons/fa";
 
 function getCategoryProgress(todos, category) {
   const all = todos.filter((t) => (t.project || "Other") === category);
@@ -40,7 +41,7 @@ function saveLocalTodos(todos) {
   localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
 }
 
-export default function TodosList() {
+export default function TodosList({ setShowAddModal }) {
   const [todoState, setTodoState] = useState({ undone: [], done: [] });
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -168,16 +169,7 @@ export default function TodosList() {
     <section className={styles.todosList}>
       {Object.entries(groupByDate).map(([label, todos]) => (
         <React.Fragment key={label}>
-          <div
-            style={{
-              fontWeight: 600,
-              fontSize: ".8em",
-              margin: "8px 0 8px 0",
-              color: "#6c63ff",
-            }}
-          >
-            {label}
-          </div>
+          <div className={styles.tasksGroupLabel}>{label}</div>
           {todos.map((task) => (
             <TodoCard
               key={task.id}
@@ -218,6 +210,8 @@ export default function TodosList() {
           </div>
         </div>
       )}
+
+      {/* Floating Add Button */}
     </section>
   );
 }

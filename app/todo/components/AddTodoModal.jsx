@@ -24,20 +24,9 @@ export default function AddTodoModal({ show, onClose, onAdd }) {
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <button
-          className={styles.closeBtn}
+          className={styles.modalCloseBtn}
           onClick={onClose}
           aria-label="Close"
-          style={{
-            position: "absolute",
-            top: 12,
-            right: 16,
-            background: "none",
-            border: "none",
-            fontSize: "1.6rem",
-            color: "#fff",
-            cursor: "pointer",
-            zIndex: 2,
-          }}
         >
           &times;
         </button>

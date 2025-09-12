@@ -6,7 +6,13 @@ export default function Header({ onAdd, setShowsideBar }) {
   return (
     <header className={styles.header}>
       <div className={styles.sideBarBtn} onClick={() => setShowsideBar(true)}>
-        <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+        <svg
+          color="black"
+          width="20"
+          height="20"
+          viewBox="0 0 32 32"
+          fill="none"
+        >
           <rect
             x="4"
             y="8"
@@ -35,9 +41,9 @@ export default function Header({ onAdd, setShowsideBar }) {
       </div>
       <div className={styles.logo}>TODO</div>
       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        <button className={styles.addTask} onClick={onAdd}>
-          <FaPlus /> Add Todo
-        </button>
+        {/* <button className={styles.addTask} onClick={onAdd}>
+          Add Todo <FaPlus />
+        </button> */}
         {/* <button className={styles.signInBtn}>Sign In</button> */}
       </div>
     </header>

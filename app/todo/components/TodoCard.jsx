@@ -125,14 +125,6 @@ export default function TodoCard({
           className={styles.editBtn}
           onClick={() => onEdit(task.id, task.name)}
           aria-label="Edit Todo"
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            fontSize: "1em",
-            color: "#6c63ff",
-            marginLeft: 8,
-          }}
         >
           <FaPen />
         </button>

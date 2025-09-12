@@ -19,7 +19,7 @@ function getCategoryProgress(todos, category) {
   const all = todos.filter((t) => (t.project || "Other") === category);
   const done = all.filter((t) => t.status === "Done");
   const percent = all.length ? Math.round((done.length / all.length) * 100) : 0;
-  return percent;
+  return { percent, done: done.length, total: all.length };
 }
 
 function ProgressCircle({ percent, color }) {
@@ -74,31 +74,50 @@ export default function SidebarProgress() {
     return () => window.removeEventListener("storage", updateTodos);
   }, []);
   return (
-    <div style={{ width: "100%" }}>
-      {categories.map((category) => (
-        <div
-          key={category}
-          style={{
-            marginBottom: 8,
-            display: "flex",
-            alignItems: "center",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            padding: "9px",
-            borderRadius: "8px",
-          }}
-        >
-          <ProgressCircle
-            percent={getCategoryProgress(todos, category)}
-            color={getCircleColor(category)}
-          />
-          <div style={{ fontWeight: 500, marginBottom: 4, color: "#fff" }}>
-            {category}
+    <div
+      style={{
+        width: "100%",
+      }}
+    >
+      <h4
+        style={{
+          color: "#fff",
+          marginBottom: 8,
+        }}
+      >
+        Progress
+      </h4>
+      {categories.map((category) => {
+        const { percent, done, total } = getCategoryProgress(todos, category);
+        return (
+          <div
+            key={category}
+            style={{
+              marginBottom: 12,
+              display: "flex",
+              alignItems: "center",
+              width: "100%",
+              borderRadius: 4,
+              padding: "4px 8px",
+              background: "rgba(255, 255, 255, 0.05)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            }}
+          >
+            <ProgressCircle
+              percent={percent}
+              color={getCircleColor(category)}
+            />
+            <div style={{ fontWeight: 500, marginBottom: 4, color: "#ddd" }}>
+              {category}
+            </div>
+            <div
+              style={{ fontSize: "0.9em", color: "#888", marginLeft: "auto" }}
+            >
+              {percent}% ({done} / {total})
+            </div>
           </div>
-          <div style={{ fontSize: "0.9em", color: "#888", marginLeft: "auto" }}>
-            {getCategoryProgress(todos, category)}%
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

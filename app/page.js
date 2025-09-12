@@ -5,6 +5,7 @@ import TodosList from "./todo/components/TodosList";
 import AddTodoModal from "./todo/components/AddTodoModal";
 import Header from "./todo/components/Header";
 import Sidebar from "./todo/components/Sidebar";
+import { FaPlus } from "react-icons/fa";
 
 export default function TodoDashboard() {
   useEffect(() => {
@@ -55,6 +56,13 @@ export default function TodoDashboard() {
         onClose={() => setShowModal(false)}
         onAdd={handleAddTodo}
       />
+      <button
+        className={styles.addTodoFloatBtn}
+        onClick={() => setShowModal(true)}
+        aria-label="Add Todo"
+      >
+        <FaPlus />
+      </button>
     </div>
   );
 }
