@@ -2,27 +2,55 @@ import React, { useState, useEffect } from "react";
 import styles from "../../dashboard.module.css";
 import TodoCard from "./TodoCard";
 import EditTodoModal from "./EditTodoModal";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
-import { db } from "@/app/db/firebase";
+
+function getCategoryProgress(todos, category) {
+  const all = todos.filter((t) => (t.project || "Other") === category);
+  const done = all.filter((t) => t.status === "Done");
+  const percent = all.length ? Math.round((done.length / all.length) * 100) : 0;
+  return percent;
+}
+function getBarClass(category) {
+  return (
+    styles.categoryProgressBar +
+    " " +
+    (category === "Personal"
+      ? styles.catPersonalBar
+      : category === "Work"
+      ? styles.catWorkBar
+      : category === "Learning"
+      ? styles.catLearningBar
+      : category === "Finance"
+      ? styles.catFinanceBar
+      : styles.catOtherBar)
+  );
+}
+
+const TODOS_KEY = "todos-list";
+function getLocalTodos() {
+  if (typeof window === "undefined" || !window.localStorage) return [];
+  const raw = localStorage.getItem(TODOS_KEY);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+function saveLocalTodos(todos) {
+  localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+}
 
 export default function TodosList() {
-  const [todoState, setTodoState] = useState({
-    undone: [],
-    done: [],
-  });
+  const [todoState, setTodoState] = useState({ undone: [], done: [] });
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editTodo, setEditTodo] = useState(null);
 
-  const fetchTodos = async () => {
+  const fetchTodos = () => {
     setLoading(true);
-    const querySnapshot = await getDocs(collection(db, "todos"));
-    const todosArr = [];
-    querySnapshot.forEach((doc) => {
-      todosArr.push({ id: doc.id, ...doc.data() });
-    });
+    const todosArr = getLocalTodos();
     setTodoState({
       undone: todosArr.filter((t) => t.status !== "Done"),
       done: todosArr.filter((t) => t.status === "Done"),
@@ -33,27 +61,33 @@ export default function TodosList() {
     fetchTodos();
   }, []);
 
-  const markAsDone = async (id) => {
-    await updateDoc(doc(db, "todos", id), {
-      status: "Done",
-      finishDate: new Date().toISOString(),
-    });
+  const markAsDone = (id) => {
+    const todos = getLocalTodos().map((t) =>
+      t.id === id
+        ? { ...t, status: "Done", finishDate: new Date().toISOString() }
+        : t
+    );
+    saveLocalTodos(todos);
     fetchTodos();
   };
-  const undoDone = async (id) => {
-    await updateDoc(doc(db, "todos", id), { status: "Undone" });
+  const undoDone = (id) => {
+    const todos = getLocalTodos().map((t) =>
+      t.id === id ? { ...t, status: "Undone" } : t
+    );
+    saveLocalTodos(todos);
     fetchTodos();
   };
   const startEdit = (id, name) => {
     setEditTodo(allTodos.find((t) => t.id === id));
     setShowEditModal(true);
   };
-  const saveEdit = async (id, newName, newProject, newDate) => {
-    await updateDoc(doc(db, "todos", id), {
-      name: newName,
-      project: newProject,
-      startDate: newDate,
-    });
+  const saveEdit = (id, newName, newProject, newDate) => {
+    const todos = getLocalTodos().map((t) =>
+      t.id === id
+        ? { ...t, name: newName, project: newProject, startDate: newDate }
+        : t
+    );
+    saveLocalTodos(todos);
     setShowEditModal(false);
     setEditTodo(null);
     fetchTodos();
@@ -62,11 +96,10 @@ export default function TodosList() {
     setDeleteId(id);
     setShowDeleteModal(true);
   };
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (deleteId) {
-      await import("firebase/firestore").then(({ doc, deleteDoc }) =>
-        deleteDoc(doc(db, "todos", deleteId))
-      );
+      const todos = getLocalTodos().filter((t) => t.id !== deleteId);
+      saveLocalTodos(todos);
       setShowDeleteModal(false);
       setShowEditModal(false);
       setEditTodo(null);
@@ -79,21 +112,8 @@ export default function TodosList() {
     setDeleteId(null);
   };
 
-  const undoneSorted = [...todoState.undone]
-    .map((t) => ({ ...t, status: "Undone" }))
-    .sort((a, b) => {
-      const dateA = a.startDate ? new Date(a.startDate) : new Date(0);
-      const dateB = b.startDate ? new Date(b.startDate) : new Date(0);
-      return dateB - dateA;
-    });
-  const doneSorted = [...todoState.done]
-    .map((t) => ({ ...t, status: "Done" }))
-    .sort((a, b) => {
-      const dateA = a.startDate ? new Date(a.startDate) : new Date(0);
-      const dateB = b.startDate ? new Date(b.startDate) : new Date(0);
-      return dateB - dateA;
-    });
-  const allTodos = [...undoneSorted, ...doneSorted];
+  // Show todos in their original order from localStorage
+  const allTodos = getLocalTodos();
 
   if (loading)
     return (
@@ -137,6 +157,9 @@ export default function TodosList() {
     groupByDate[label].push(todo);
   });
 
+  // Progress bars for each category
+  const categories = ["Personal", "Work", "Learning", "Finance", "Other"];
+
   return (
     <section className={styles.todosList}>
       {Object.entries(groupByDate).map(([label, todos]) => (
@@ -144,8 +167,8 @@ export default function TodosList() {
           <div
             style={{
               fontWeight: 600,
-              fontSize: "1.1em",
-              margin: "16px 0 8px 0",
+              fontSize: ".8em",
+              margin: "8px 0 8px 0",
               color: "#6c63ff",
             }}
           >
@@ -159,12 +182,7 @@ export default function TodosList() {
               onDelete={handleDeleteClick}
               onMarkAsDone={markAsDone}
               onUndoDone={undoDone}
-              onStart={async (id) => {
-                await updateDoc(doc(db, "todos", id), {
-                  status: "In Progress",
-                });
-                fetchTodos();
-              }}
+              onStart={() => {}}
             />
           ))}
         </React.Fragment>

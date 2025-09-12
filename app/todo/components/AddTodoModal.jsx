@@ -5,7 +5,6 @@ export default function AddTodoModal({ show, onClose, onAdd }) {
   const [newTodo, setNewTodo] = useState({
     name: "",
     project: "",
-    priority: "Normal",
   });
 
   const handleSave = async () => {
@@ -15,7 +14,7 @@ export default function AddTodoModal({ show, onClose, onAdd }) {
       startDate: new Date().toISOString(),
       created: new Date().toISOString(),
     });
-    setNewTodo({ name: "", project: "", priority: "Normal" });
+    setNewTodo({ name: "", project: "" });
     onClose();
   };
 
@@ -70,19 +69,7 @@ export default function AddTodoModal({ show, onClose, onAdd }) {
           <option value="Learning">Learning</option>
           <option value="Finance">Finance</option>
         </select>
-        <label className={styles.modalLabel} htmlFor="todoPriority">
-          Priority
-        </label>
-        <select
-          id="todoPriority"
-          value={newTodo.priority}
-          onChange={(e) => setNewTodo({ ...newTodo, priority: e.target.value })}
-          className={styles.modalInput}
-        >
-          <option value="Low">Low</option>
-          <option value="Normal">Normal</option>
-          <option value="High">High</option>
-        </select>
+        {/* Priority removed */}
         <button className={styles.saveBtn} onClick={handleSave}>
           Save
         </button>

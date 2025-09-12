@@ -1,3 +1,16 @@
+:root {
+  --background: #14161c;
+  --foreground: #23272f;
+  --accent: #ff4081;
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Inter", "Roboto", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* =====================
    Modal Styles
    ===================== */
@@ -9,7 +22,7 @@
   height: 100vh;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
 }
@@ -18,24 +31,24 @@
   padding: 20px 12px 24px 12px;
   border-radius: 12px;
   box-shadow: 0 6px 32px rgba(0, 0, 0, 0.25);
-  min-width: 90vw;
+  min-width: 95vw;
   max-width: 98vw;
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
   color: #fff;
+  transform: scale(0.85);
+  animation: modalSlideDown 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @media (min-width: 480px) {
   .modalContent {
-    transform: scale(0.9);
-    min-width: 320px;
-    max-width: 400px;
-    padding: 24px 24px 28px 24px;
+    padding: 16px 18px;
+    max-width: 300px !important;
+    /* background-color: #00bcd4; */
   }
 }
 .modalLabel {
-  font-size: 1.08rem;
+  font-size: 1rem;
   font-weight: 500;
   color: #aab6ff;
   margin-bottom: 2px;
@@ -189,7 +202,7 @@
   border-radius: 5px;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.13);
   padding: 6px 8px 8px 8px;
-  font-size: 0.7rem;
+  font-size: 0.5rem;
   display: flex;
   flex-direction: column;
   border-left: 5px solid #6c63ff;
@@ -197,7 +210,7 @@
   color: #f7f8fa;
   transition: box-shadow 0.2s, transform 0.2s;
   cursor: pointer;
-  min-width: 100%;
+  min-width: 97%;
 }
 .taskDetail:hover {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -232,10 +245,10 @@
     padding: 4px;
   }
   .taskDetail {
-    width: 100%;
     padding: 4px 4px 6px 4px;
-    margin-bottom: 2px;
-    font-size: 0.98rem;
+    /* margin-left: 7px; */
+    margin: 3px;
+    font-size: 0.6rem;
   }
 }
 .taskProject {
@@ -285,7 +298,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(108, 99, 255, 0.13);
+  /* box-shadow: 0 1px 4px rgba(108, 99, 255, 0.13); */
   transition: background 0.2s, color 0.2s;
   z-index: 2;
 }
@@ -335,13 +348,14 @@
    Utility & Misc Styles
    ===================== */
 .logo {
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: bold;
   background: linear-gradient(90deg, #6c63ff 0%, #00bcd4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+  margin-right: 290px;
 }
 .mainSection {
   flex: 1;
@@ -352,9 +366,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px 16px 24px;
+  padding: 8px 12px 8px 12px;
   background: #23272f;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.13);
+  position: relative;
+}
+.burgerBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 2em;
+  color: var(--accent);
+  margin-right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.burgerBtn:focus {
+  outline: 2px solid var(--accent);
 }
 .addTask {
   background: linear-gradient(90deg, #6c63ff 60%, #00bcd4 100%);
@@ -363,8 +392,8 @@
   color: #fff;
   border: none;
   border-radius: 24px;
-  padding: 8px 15px;
-  font-size: 1rem;
+  padding: 8px;
+  font-size: 0.875rem;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -459,4 +488,99 @@
   background-position: 100% 100%;
   color: #fff;
   border: 1px solid #6c63ff;
+}
+/* =====================
+   Sidebar Styles
+   ===================== */
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: var(--background);
+  /* background-color: #00bcd4; */
+  color: var(--foreground);
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 32px 18px 18px 18px;
+  gap: 24px;
+  position: fixed;
+  z-index: 99;
+}
+.sideBarBtn {
+  margin-top: 3px;
+  font-size: 1rem;
+  font-weight: bold;
+  /* background: linear-gradient(90deg, #6c63ff 0%, #00bcd4 100%); */
+  color: white;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.sidebar .sidebarTitle {
+  font-size: 1em;
+  font-weight: bold;
+  color: white;
+}
+.sidebar .sidebar-link {
+  font-size: 1em;
+  color: var(--text-color);
+  text-decoration: none;
+  padding: 8px 0;
+  width: 100%;
+  border-radius: 8px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.sidebar .sidebar-link:hover {
+  background: var(--accent);
+  color: #fff;
+}
+.categoryProgress {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  margin: 8px 0 16px 0;
+  overflow: hidden;
+}
+.categoryProgressBar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s;
+}
+.catPersonalBar {
+  background: #6c63ff;
+}
+.catWorkBar {
+  background: #00bcd4;
+}
+.catLearningBar {
+  background: #4caf50;
+}
+.catFinanceBar {
+  background: #ff9800;
+}
+.catOtherBar {
+  background: #888;
+}
+.sidebarProgressCircle {
+  width: 56px;
+  height: 56px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.sidebarProgressCircle svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.sidebarProgressText {
+  position: relative;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--accent);
 }

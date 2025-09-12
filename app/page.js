@@ -1,41 +1,53 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./dashboard.module.css";
-import { FaPlus } from "react-icons/fa";
-import { addDoc, collection } from "firebase/firestore";
-import { db } from "./db/firebase";
 import TodosList from "./todo/components/TodosList";
 import AddTodoModal from "./todo/components/AddTodoModal";
-
-function Header({ onAdd }) {
-  return (
-    <header className={styles.header}>
-      <div className={styles.logo}>TODO</div>
-      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-        <button className={styles.addTask} onClick={onAdd}>
-          <FaPlus />
-        </button>
-        <button className={styles.signInBtn}>Sign In</button>
-      </div>
-    </header>
-  );
-}
+import Header from "./todo/components/Header";
+import Sidebar from "./todo/components/Sidebar";
 
 export default function TodoDashboard() {
+  useEffect(() => {
+    document.body.classList.add("light-theme");
+    return () => document.body.classList.remove("light-theme");
+  }, []);
+
   const [showModal, setShowModal] = useState(false);
-  const handleAddTodo = async (todoData) => {
-    await addDoc(collection(db, "todos"), {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleAddTodo = (todoData) => {
+    // Get current todos from localStorage
+    const TODOS_KEY = "todos-list";
+    const raw = localStorage.getItem(TODOS_KEY);
+    let todos = [];
+    try {
+      todos = raw ? JSON.parse(raw) : [];
+    } catch {
+      todos = [];
+    }
+    // Add new todo with unique id
+    const newTodo = {
       ...todoData,
-      status: "To Do",
-    });
+      id: Date.now().toString(),
+      status: "Undone",
+    };
+    todos.push(newTodo);
+    localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+    setShowModal(false);
     window.location.reload();
   };
   return (
     <div className={styles.dashboard}>
-      <div className={styles.mainSection}>
-        <Header onAdd={() => setShowModal(true)} />
-        <div className={styles.boardAndDetail}>
-          <TodosList />
+      <div style={{ display: "flex" }}>
+        {sidebarOpen && <Sidebar onClose={() => setSidebarOpen(false)} />}
+        <div className={styles.mainSection}>
+          <Header
+            onAdd={() => setShowModal(true)}
+            setShowsideBar={setSidebarOpen}
+          />
+          <div className={styles.boardAndDetail}>
+            <TodosList />
+          </div>
         </div>
       </div>
       <AddTodoModal

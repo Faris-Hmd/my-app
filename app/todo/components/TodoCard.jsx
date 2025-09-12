@@ -18,72 +18,123 @@ export default function TodoCard({
 
   return (
     <div key={task.id} className={styles.taskDetail} data-status={task.status}>
-      {/* ...existing code for name, project, dates, status buttons... */}
-      <h2
-        style={{ cursor: "pointer" }}
-        className={task.status === "Done" ? styles.doneText : undefined}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          width: "100%",
+        }}
       >
-        {task.name}
-      </h2>
-      <div className={styles.taskProject}>Category: {task.project}</div>
-      {task.startDate && (
-        <div className={styles.taskDate}>
-          Start:{" "}
-          {(() => {
-            const d = new Date(task.startDate);
-            const day = d.getDate().toString().padStart(2, "0");
-            const month = (d.getMonth() + 1).toString().padStart(2, "0");
-            const hour = d.getHours().toString().padStart(2, "0");
-            const min = d.getMinutes().toString().padStart(2, "0");
-            return `${day}/${month} ${hour}:${min}`;
-          })()}
-        </div>
-      )}
-      {task.status === "Done" && task.finishDate && (
-        <div className={styles.taskDate}>
-          Finished:{" "}
-          {(() => {
-            const d = new Date(task.finishDate);
-            const day = d.getDate().toString().padStart(2, "0");
-            const month = (d.getMonth() + 1).toString().padStart(2, "0");
-            const hour = d.getHours().toString().padStart(2, "0");
-            const min = d.getMinutes().toString().padStart(2, "0");
-            return `${day}/${month} ${hour}:${min}`;
-          })()}
-        </div>
-      )}
-      {task.status !== "Done" && (
-        <button
-          className={styles.doneBtn}
-          onClick={() => onMarkAsDone(task.id)}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            marginLeft: 6,
+          }}
         >
-          <FaCheck style={{ fontSize: "1em" }} />
-        </button>
-      )}
-      {task.status === "Done" && (
+          <input
+            type="checkbox"
+            checked={task.status === "Done"}
+            onChange={() =>
+              task.status === "Done"
+                ? onUndoDone(task.id)
+                : onMarkAsDone(task.id)
+            }
+            className={styles.todoCheckbox}
+          />
+          <div>
+            <h2
+              style={{ cursor: "pointer", margin: "5px 0" }}
+              className={task.status === "Done" ? styles.doneText : undefined}
+            >
+              {task.name}
+            </h2>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 5,
+              }}
+            >
+              <span
+                className={
+                  styles.taskProject +
+                  " " +
+                  (task.project ? styles["cat" + task.project] : "")
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: "60px",
+                  padding: "2px 12px",
+                  borderRadius: "16px",
+                  fontSize: "0.95em",
+                  fontWeight: 500,
+                  color: "#fff",
+                  background:
+                    task.project === "Personal"
+                      ? "#6c63ff"
+                      : task.project === "Work"
+                      ? "#00bcd4"
+                      : task.project === "Learning"
+                      ? "#4caf50"
+                      : task.project === "Finance"
+                      ? "#ff9800"
+                      : "#888",
+                }}
+              >
+                {task.project}
+              </span>
+              |&nbsp;
+              {task.startDate && (
+                <span className={styles.taskDate}>
+                  {(() => {
+                    const d = new Date(task.startDate);
+                    const day = d.getDate().toString().padStart(2, "0");
+                    const month = (d.getMonth() + 1)
+                      .toString()
+                      .padStart(2, "0");
+                    const hour = d.getHours().toString().padStart(2, "0");
+                    const min = d.getMinutes().toString().padStart(2, "0");
+                    return `${day}/${month} ${hour}:${min}`;
+                  })()}
+                </span>
+              )}
+              {task.status === "Done" && task.finishDate && (
+                <span className={styles.taskDate}>
+                  |&nbsp;
+                  {(() => {
+                    const d = new Date(task.finishDate);
+                    const day = d.getDate().toString().padStart(2, "0");
+                    const month = (d.getMonth() + 1)
+                      .toString()
+                      .padStart(2, "0");
+                    const hour = d.getHours().toString().padStart(2, "0");
+                    const min = d.getMinutes().toString().padStart(2, "0");
+                    return ` ${day}/${month} ${hour}:${min}`;
+                  })()}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
         <button
-          className={styles.undoBtn}
-          onClick={() => onUndoDone(task.id)}
-          title="Undo"
-        >
-          <FaUndo style={{ fontSize: "1em" }} />
-        </button>
-      )}
-      {/* Dropdown menu trigger */}
-      <div style={{ position: "absolute", bottom: 8, right: 8 }}>
-        <button
-          className={styles.menuBtn}
+          className={styles.editBtn}
           onClick={() => onEdit(task.id, task.name)}
           aria-label="Edit Todo"
           style={{
             background: "none",
             border: "none",
             cursor: "pointer",
-            fontSize: "1.3em",
-            color: "#aab6ff",
+            fontSize: "1em",
+            color: "#6c63ff",
+            marginLeft: 8,
           }}
         >
-          <FaEllipsisV />
+          <FaPen />
         </button>
       </div>
     </div>
