@@ -22,18 +22,8 @@ export default function Sidebar({ onClose }) {
       style={{ position: "fixed" }}
     >
       <button
+        className={styles.modalCloseBtn}
         onClick={onClose}
-        style={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          background: "none",
-          border: "none",
-          fontSize: "1.5em",
-          color: "#888",
-          cursor: "pointer",
-          zIndex: 2,
-        }}
         aria-label="Close Sidebar"
       >
         &times;
