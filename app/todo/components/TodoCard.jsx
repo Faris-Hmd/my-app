@@ -1,21 +1,13 @@
-import React, { useState } from "react";
 import styles from "../../dashboard.module.css";
-import { FaCheck, FaPen, FaUndo, FaTrash, FaEllipsisV } from "react-icons/fa";
+import { FaPen } from "react-icons/fa";
 
 export default function TodoCard({
   task,
   onEdit,
-  onSaveEdit,
-  editId,
-  editValue,
-  setEditValue,
-  onDelete,
+
   onMarkAsDone,
   onUndoDone,
-  onStart,
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <div key={task.id} className={styles.taskDetail} data-status={task.status}>
       <div
@@ -42,7 +34,7 @@ export default function TodoCard({
                 ? onUndoDone(task.id)
                 : onMarkAsDone(task.id)
             }
-            className={styles.todoCheckbox}
+            className={styles.todoCheckboxCircle}
           />
           <div>
             <h2

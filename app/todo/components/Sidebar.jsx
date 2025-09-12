@@ -31,6 +31,7 @@ export default function Sidebar({ onClose }) {
         <button
           className={styles.modalCloseBtn}
           onClick={onClose}
+          style={{ color: "#fff" }}
           aria-label="Close Sidebar"
         >
           &times;

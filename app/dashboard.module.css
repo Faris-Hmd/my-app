@@ -1,4 +1,35 @@
 /* =====================
+   Todo Checkbox Circle
+   ===================== */
+.todoCheckboxCircle {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #888;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.todoCheckboxCircle:checked {
+  border-color: #4caf50;
+  background: #4caf50;
+}
+.todoCheckboxCircle:checked::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+}
+/* =====================
    Sidebar Overlay Blur
    ===================== */
 .sidebarOverlay {
@@ -122,9 +153,9 @@
 .addTodoFloatBtn {
   position: fixed;
   bottom: 20px;
-  right: 30px;
-  width: 40px;
-  height: 40px;
+  right: 20px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   background: linear-gradient(90deg, #333 60%, #444 100%);
   color: #fff;
@@ -143,9 +174,9 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28);
 }
 .tasksGroupLabel {
-  font-size: 0.6rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin: 8px 8px 2px 0;
+  margin: 8px 16px 2px 8px;
   color: #333;
 }
 /* =====================
@@ -223,10 +254,10 @@
   right: 16px;
   background: none;
   border: none;
-  font-size: 1.6rem;
+  font-size: 1.3rem;
   cursor: pointer;
   z-index: 2;
-  color: #000;
+  color: #fff;
 }
 .modalDeleteBtn {
   margin-top: 8px;
@@ -418,25 +449,6 @@
   position: relative;
 }
 
-.addTask {
-  background-color: #000;
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background-position 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    box-shadow 1s;
-}
-.addTask:hover {
-  box-shadow: 0 4px 16px rgba(108, 99, 255, 0.15);
-  color: #fff;
-}
 .loadingBalls {
   display: flex;
   align-items: center;
