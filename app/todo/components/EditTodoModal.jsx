@@ -64,7 +64,7 @@ export default function EditTodoModal({
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           className={styles.modalInput}
-          autoFocus
+          // autoFocus
         />
         <label className={styles.modalLabel} htmlFor="editTodoProject">
           Project
