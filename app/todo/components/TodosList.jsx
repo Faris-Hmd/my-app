@@ -2,29 +2,6 @@ import React, { useState, useEffect } from "react";
 import styles from "../../dashboard.module.css";
 import TodoCard from "./TodoCard";
 import EditTodoModal from "./EditTodoModal";
-import { FaPlus } from "react-icons/fa";
-
-function getCategoryProgress(todos, category) {
-  const all = todos.filter((t) => (t.project || "Other") === category);
-  const done = all.filter((t) => t.status === "Done");
-  const percent = all.length ? Math.round((done.length / all.length) * 100) : 0;
-  return percent;
-}
-function getBarClass(category) {
-  return (
-    styles.categoryProgressBar +
-    " " +
-    (category === "Personal"
-      ? styles.catPersonalBar
-      : category === "Work"
-      ? styles.catWorkBar
-      : category === "Learning"
-      ? styles.catLearningBar
-      : category === "Finance"
-      ? styles.catFinanceBar
-      : styles.catOtherBar)
-  );
-}
 
 const TODOS_KEY = "todos-list";
 function getLocalTodos() {
@@ -41,7 +18,7 @@ function saveLocalTodos(todos) {
   localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
 }
 
-export default function TodosList({ setShowAddModal }) {
+export default function TodosList() {
   const [todoState, setTodoState] = useState({ undone: [], done: [] });
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -196,7 +173,10 @@ export default function TodosList({ setShowAddModal }) {
       />
       {/* Warning Modal for Delete */}
       {showDeleteModal && (
-        <div className={styles.modalOverlay}>
+        <div
+          className={styles.modalOverlay}
+          style={{ justifyContent: "center", alignItems: "center" }}
+        >
           <div className={styles.modalContent}>
             <h3>Are you sure you want to delete this todo?</h3>
             <div style={{ display: "flex", gap: 12, marginTop: 16 }}>

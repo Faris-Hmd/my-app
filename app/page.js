@@ -40,6 +40,19 @@ export default function TodoDashboard() {
     setShowModal(false);
     window.location.reload();
   };
+
+  // useEffect(() => {
+  //   const handleResize = () => {
+  //     if (window.innerWidth > 768) {
+  //       setSidebarOpen(true);
+  //     } else {
+  //       setSidebarOpen(false);
+  //     }
+  //   };
+  //   window.addEventListener("resize", handleResize);
+  //   return () => window.removeEventListener("resize", handleResize);
+  // }, [window.innerWidth]);
+
   return (
     <>
       <Head>

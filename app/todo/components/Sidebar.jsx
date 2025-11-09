@@ -1,21 +1,20 @@
-import React, { useRef } from "react";
 import SidebarProgress from "./SidebarProgress";
 import styles from "../../dashboard.module.css";
 import { FaSignOutAlt } from "react-icons/fa";
+import { useEffect } from "react";
 
 export default function Sidebar({ onClose }) {
-  const sidebarRef = useRef();
-
-  React.useEffect(() => {
-    function handleClick(e) {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-        onClose();
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [onClose]);
-
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [window.innerWidth]);
   return (
     <>
       <div
@@ -23,11 +22,7 @@ export default function Sidebar({ onClose }) {
         onClick={onClose}
         aria-label="Close Sidebar Overlay"
       />
-      <aside
-        ref={sidebarRef}
-        className={styles.sidebar}
-        style={{ position: "fixed" }}
-      >
+      <aside className={styles.sidebar} style={{ position: "fixed" }}>
         <button
           className={styles.modalCloseBtn}
           onClick={onClose}

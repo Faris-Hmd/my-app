@@ -1,3 +1,8 @@
+@media (min-width: 768px) {
+  .sidebarOverlay {
+    display: none !important;
+  }
+}
 /* =====================
    Todo Checkbox Circle
    ===================== */
@@ -159,7 +164,7 @@
   border-radius: 50%;
   background: linear-gradient(90deg, #333 60%, #444 100%);
   color: #fff;
-  border: 2px solid #000;
+  /* border: 2px solid #000; */
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   font-size: 1.1rem;
   display: flex;
@@ -337,6 +342,7 @@
    ===================== */
 .taskDetail {
   background: var(--foreground);
+  background: #fff9;
   color: #111111;
   border-radius: 5px;
   box-shadow: 0 3px 5px rgba(0, 0, 0, 0.13);
@@ -346,11 +352,11 @@
   flex-direction: column;
   border-left: 5px solid #6c63ff;
   position: relative;
-  cursor: pointer;
+  /* cursor: pointer; */
   min-width: 97%;
 }
 .taskDetail:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 @media (min-width: 768px) {
   .taskDetail {
@@ -372,9 +378,9 @@
   flex-direction: row;
   flex-wrap: wrap;
   gap: 8px;
-  justify-content: flex-start;
   padding: 6px;
   max-width: 100%;
+  /* background-color: #000000; */
 }
 @media (max-width: 480px) {
   .todosList {
@@ -383,7 +389,7 @@
   }
   .taskDetail {
     padding: 4px 4px 6px 4px;
-    /* margin-left: 7px; */
+    margin-left: 7px;
     margin: 3px;
     font-size: 0.6rem;
   }
@@ -445,6 +451,7 @@
 
   padding-left: 15px;
   background: var(--background);
+  background-color: #000 !important;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.13);
   position: relative;
 }
@@ -519,6 +526,7 @@
   position: fixed;
   z-index: 99;
 }
+
 .modalCloseBtn {
   font-size: 1.7rem;
   color: black;
